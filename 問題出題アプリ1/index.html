@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>中学受験 問題アプリ</title>
+<style>
+:root{--bg:#f5f4f0;--card:#fff;--b1:#e5e3dc;--b2:#ccc9be;--tx:#1a1917;--mt:#6b6860;--ht:#9b9890;--bl:#2558c8;--blbg:#eaf0fd;--bltx:#1a3a8f;--gn:#1e7a3c;--gnbg:#eaf5ee;--gntx:#155228;--rd:#c0392b;--rdbg:#fdf0ee;--rdtx:#7a1a12;--am:#b06a00;--ambg:#fdf4e3;--amtx:#6b4000}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,"Hiragino Sans",sans-serif;background:var(--bg);color:var(--tx);font-size:15px}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+.hdr{background:var(--card);border-bottom:1px solid var(--b1);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.hdr h1{font-size:16px;font-weight:700}
+.hbg{font-size:10px;background:var(--blbg);color:var(--bltx);padding:2px 8px;border-radius:20px;font-weight:600}
+.main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 14px 90px}
+.bnv{flex-shrink:0;background:var(--card);border-top:1px solid var(--b1);display:flex;padding-bottom:env(safe-area-inset-bottom,0)}
+.nb{flex:1;padding:8px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;font-size:10px;color:var(--ht);font-family:inherit;min-height:50px;-webkit-appearance:none;touch-action:manipulation}
+.nb span{font-size:22px;line-height:1.3;display:block}
+.nb.on{color:var(--bl)}
+.pg{display:none}.pg.on{display:block}
+.card{background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:14px;margin-bottom:12px}
+.lbl{font-size:11px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.sc{background:var(--card);border:1px solid var(--b1);border-radius:8px;padding:11px;text-align:center}
+.sn{font-size:22px;font-weight:700;line-height:1.1}.sl{font-size:10px;color:var(--ht);margin-top:2px}
+.ss{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+.sv{background:var(--card);border:1px solid var(--b1);border-radius:8px;padding:8px 4px;text-align:center}
+.svl{font-size:10px;font-weight:600;margin-bottom:3px}.svn{font-size:12px;font-weight:600}
+.svn em{font-size:10px;font-weight:400;color:var(--ht);font-style:normal}
+.wg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.wc{background:var(--card);border:2px solid var(--b1);border-radius:8px;padding:11px;touch-action:manipulation;cursor:pointer;-webkit-user-select:none;user-select:none}
+.wc.on{border-color:var(--bl);background:var(--blbg)}
+.wct{font-size:10px;color:var(--ht);margin-bottom:2px}.wcn{font-size:13px;font-weight:600;margin-bottom:6px}
+.wb{background:var(--bg);border-radius:3px;height:5px;margin-bottom:4px}.wf{height:5px;border-radius:3px}
+.wa{font-size:10px;color:var(--rd);background:var(--rdbg);padding:2px 6px;border-radius:5px;margin-top:4px;display:inline-block}
+.fp{background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:14px;margin-bottom:12px}
+.fr{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.fg{display:flex;flex-direction:column;gap:4px;flex:1;min-width:88px}
+.fg label{font-size:11px;color:var(--mt);font-weight:500}
+select{border:1px solid var(--b2);border-radius:8px;padding:9px 28px 9px 10px;font-size:14px;background:var(--card);color:var(--tx);width:100%;font-family:inherit;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center}
+select:disabled{opacity:.4}
+.mc{font-size:12px;color:var(--mt);padding:6px 10px;background:var(--bg);border-radius:8px;margin-bottom:8px}
+.stbtn{background:var(--bl);color:#fff;border:none;border-radius:8px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;width:100%;font-family:inherit;-webkit-appearance:none;touch-action:manipulation;min-height:50px}
+.stbtn:active{opacity:.8}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.pp{font-size:13px;color:var(--mt)}.pd{display:flex;gap:5px}
+.dt{width:10px;height:10px;border-radius:50%;background:var(--b2)}.dt.cr{background:var(--bl)}.dt.ok{background:var(--gn)}.dt.ng{background:var(--rd)}
+.tw{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:8px;padding:10px 12px;margin-bottom:12px}
+.tn{font-size:22px;font-weight:700;min-width:52px;font-variant-numeric:tabular-nums}.tn.wn{color:var(--am)}.tn.ov{color:var(--rd)}
+.ti{font-size:10px;color:var(--ht)}.tk{flex:1;height:6px;background:var(--b1);border-radius:3px;overflow:hidden}
+.tf{height:6px;border-radius:3px;background:var(--bl);transition:width 1s linear,background 1s}
+.qm{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tg{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600}
+.tg-s{background:var(--blbg);color:var(--bltx)}.tg-k{background:#fbeaf0;color:#72243e}
+.tg-sh{background:var(--ambg);color:var(--amtx)}.tg-r{background:var(--gnbg);color:var(--gntx)}
+.tg-0{background:var(--gnbg);color:var(--gntx)}.tg-1{background:var(--blbg);color:var(--bltx)}
+.tg-2{background:var(--ambg);color:var(--amtx)}.tg-3{background:#faece7;color:#712b13}.tg-4{background:var(--rdbg);color:var(--rdtx)}
+.qx{font-size:15px;line-height:1.9;margin-bottom:14px;white-space:pre-wrap}
+.cs{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.cb{border:1.5px solid var(--b2);border-radius:8px;padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:flex-start;background:var(--card);color:var(--tx);text-align:left;font-family:inherit;width:100%;-webkit-appearance:none;touch-action:manipulation;min-height:50px;cursor:pointer}
+.cb.sl{border-color:var(--bl);background:var(--blbg)}.cb.ok{border-color:var(--gn);background:var(--gnbg);color:var(--gntx)}.cb.ng{border-color:var(--rd);background:var(--rdbg);color:var(--rdtx)}
+.cl{font-weight:700;min-width:20px;flex-shrink:0}
+.sg2{border:1px solid var(--b1);border-radius:8px;padding:10px;margin-bottom:10px;background:var(--bg)}
+.sg2 .sl2{font-size:12px;font-weight:600;color:var(--mt);margin-bottom:6px}
+.ta{width:100%;border:1.5px solid var(--b2);border-radius:8px;padding:10px;font-size:15px;min-height:60px;resize:vertical;background:var(--card);color:var(--tx);font-family:inherit}
+.ta:focus{outline:none;border-color:var(--bl)}
+.ar{display:flex;gap:8px;margin-top:10px}
+.ckbtn{background:var(--gn);color:#fff;border:none;border-radius:8px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;min-height:48px;-webkit-appearance:none;touch-action:manipulation}
+.htbtn{background:var(--card);color:var(--am);border:1.5px solid var(--am);border-radius:8px;padding:12px 16px;font-size:14px;cursor:pointer;font-family:inherit;min-height:48px;-webkit-appearance:none;touch-action:manipulation}
+.exp{border-radius:0 8px 8px 0;padding:14px;margin-top:12px;font-size:13px;line-height:1.85;white-space:pre-wrap}
+.exp.ok{border-left:4px solid var(--gn);background:var(--gnbg)}.exp.ng{border-left:4px solid var(--rd);background:var(--rdbg)}
+.exh{font-weight:700;margin-bottom:6px;font-size:14px}
+.pt{background:var(--bg);border-radius:6px;padding:8px 12px;margin-top:10px;font-size:13px;color:var(--mt)}
+.htbox{background:var(--ambg);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px;color:var(--amtx)}
+.nxbtn{background:var(--mt);color:#fff;border:none;border-radius:8px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer;margin-top:10px;font-family:inherit;min-height:48px;-webkit-appearance:none;touch-action:manipulation;display:block}
+.rc{text-align:center;padding:20px 0}.rscore{font-size:42px;font-weight:800;line-height:1;margin-bottom:6px}
+.rpb{background:var(--bl);color:#fff;border:none;border-radius:8px;padding:13px 30px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;min-height:48px;-webkit-appearance:none;touch-action:manipulation}
+.hl{display:flex;flex-direction:column;gap:8px}
+.hlr{background:var(--card);border:1px solid var(--b1);border-radius:8px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+.la{background:var(--card);border:2px dashed var(--b2);border-radius:12px;padding:28px 20px;text-align:center;margin-bottom:12px;cursor:pointer;touch-action:manipulation}
+.la:active{background:var(--blbg)}
+.dibox{background:var(--gnbg);border:1px solid var(--gn);border-radius:8px;padding:12px;font-size:13px;color:var(--gntx);margin-top:10px}
+.em{text-align:center;padding:40px;color:var(--ht);font-size:14px}
+.loading{text-align:center;padding:60px 20px;color:var(--mt);font-size:15px}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="hdr">
+  <h1>&#128218; 中学受験 問題アプリ</h1>
+  <span class="hbg">四谷大塚 4年</span>
+</div>
+<div class="main" id="MAIN">
+  <div class="pg on" id="PG0">
+    <div id="LOADING" class="loading">&#128218; 問題データを読み込み中...<br><small style="color:var(--ht)">しばらくお待ちください</small></div>
+    <div id="HOME_CONTENT" style="display:none">
+    <div class="sg">
+      <div class="sc"><div class="sn" id="H1" style="color:var(--bl)">0</div><div class="sl">累計</div></div>
+      <div class="sc"><div class="sn" id="H2" style="color:var(--gn)">0</div><div class="sl">正解</div></div>
+      <div class="sc"><div class="sn" id="H3" style="color:var(--am)">--</div><div class="sl">正答率</div></div>
+    </div>
+    <div class="ss">
+      <div class="sv"><div class="svl" style="color:var(--bltx)">算数</div><div class="svn" id="SS0">0<em>/0</em></div></div>
+      <div class="sv"><div class="svl" style="color:#72243e">国語</div><div class="svn" id="SS1">0<em>/0</em></div></div>
+      <div class="sv"><div class="svl" style="color:var(--amtx)">社会</div><div class="svn" id="SS2">0<em>/0</em></div></div>
+      <div class="sv"><div class="svl" style="color:var(--gntx)">理科</div><div class="svn" id="SS3">0<em>/0</em></div></div>
+    </div>
+    <div class="lbl">弱点から出題</div>
+    <div class="wg" id="WG"></div>
+    <div class="fp">
+      <div class="lbl">出題設定</div>
+      <div class="fr">
+        <div class="fg"><label>科目</label>
+          <select id="FS">
+            <option value="">全科目</option>
+            <option value="算数">算数</option>
+            <option value="国語">国語</option>
+            <option value="社会">社会</option>
+            <option value="理科">理科</option>
+          </select>
+        </div>
+        <div class="fg"><label>巻</label>
+          <select id="FSER">
+            <option value="">上+下</option>
+            <option value="上">上巻</option>
+            <option value="下">下巻</option>
+          </select>
+        </div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label>回</label><select id="FK"><option value="">全回</option></select></div>
+        <div class="fg"><label>単元</label><select id="FU" disabled><option value="">全単元</option></select></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label>難易度</label>
+          <select id="FD">
+            <option value="">全難易度</option>
+            <option value="基本">基本</option>
+            <option value="標準">標準</option>
+            <option value="S入門">S入門</option>
+            <option value="S中堅">S中堅</option>
+            <option value="S上位">S上位</option>
+          </select>
+        </div>
+        <div class="fg"><label>出題数</label>
+          <select id="FC">
+            <option value="1">1問</option>
+            <option value="3" selected>3問</option>
+            <option value="5">5問</option>
+            <option value="10">10問</option>
+            <option value="0">全問</option>
+          </select>
+        </div>
+      </div>
+      <div class="mc" id="MC">---</div>
+      <button class="stbtn" id="STBTN">出題開始 &#9654;</button>
+    </div>
+    </div><!-- /HOME_CONTENT -->
+  </div>
+  <div class="pg" id="PG1">
+    <div class="ph"><div class="pp" id="PP">1/3問</div><div class="pd" id="PD"></div></div>
+    <div class="tw"><div><div class="tn" id="TN">-:--</div><div class="ti" id="TI"></div></div><div class="tk"><div class="tf" id="TF"></div></div></div>
+    <div class="card">
+      <div class="qm" id="QM"></div>
+      <div class="qx" id="QX"></div>
+      <div id="QI"></div>
+      <div class="ar"><button class="ckbtn" id="CKBTN">答え合わせ</button><button class="htbtn" id="HTBTN">ヒント</button></div>
+      <div id="HA"></div><div id="RA"></div>
+    </div>
+  </div>
+  <div class="pg" id="PG2">
+    <div class="card rc">
+      <div class="rscore" id="RS">-</div>
+      <div style="font-size:14px;color:var(--mt);margin-bottom:10px" id="RL">問正解</div>
+      <div style="font-size:17px;font-weight:600;margin-bottom:16px" id="RM">-</div>
+      <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:20px" id="RB"></div>
+      <button class="rpb" id="HBTN">ホームへ戻る</button>
+    </div>
+  </div>
+  <div class="pg" id="PG3"><div class="lbl">学習履歴</div><div id="HL"></div></div>
+  <div class="pg" id="PG4">
+    <div class="card">
+      <div class="lbl">問題データ</div>
+      <div id="DI" style="font-size:13px;color:var(--mt);margin-bottom:12px"></div>
+    </div>
+    <div class="card"><div class="lbl">成績リセット</div><button class="stbtn" id="RSTBTN" style="background:var(--rd)">全成績をリセット</button></div>
+  </div>
+</div>
+<nav class="bnv">
+  <button class="nb on" id="NB0" type="button"><span>&#127968;</span>ホーム</button>
+  <button class="nb" id="NB1" type="button"><span>&#128202;</span>履歴</button>
+  <button class="nb" id="NB2" type="button"><span>&#9881;</span>設定</button>
+</nav>
+</div>
+<script>
+var AQ=[];
+var WK=[
+  {s:'社会',t:'都道府県・地方区分',p:46,c:'#EF9F27',a:'最弱点 偏差値46.2',fs:'社会',fsr:'上',fk:6},
+  {s:'国語',t:'語彙・漢字',p:53,c:'#ED93B1',a:'語彙不足 偏差値52.7',fs:'国語',fsr:'',fk:null},
+  {s:'国語',t:'設問の型対応',p:54,c:'#ED93B1',a:'理由・気持ちが不安定',fs:'国語',fsr:'',fk:null},
+  {s:'算数',t:'計算精度・時間',p:64,c:'#85B7EB',a:'ケアレスで得点ロス',fs:'算数',fsr:'',fk:null},
+  {s:'理科',t:'応用問題',p:58,c:'#97C459',a:'基礎は安定',fs:'理科',fsr:'',fk:null}
+];
+var DT={'基本':{'choice':60,'text':90},'標準':{'choice':90,'text':150},'S入門':{'choice':120,'text':210},'S中堅':{'choice':150,'text':270},'S上位':{'choice':180,'text':360}};
+var STAG={'算数':'tg-s','国語':'tg-k','社会':'tg-sh','理科':'tg-r'};
+var DTAG={'基本':'tg-0','標準':'tg-1','S入門':'tg-2','S中堅':'tg-3','S上位':'tg-4'};
+var SM={算数:'SS0',国語:'SS1',社会:'SS2',理科:'SS3'};
+var ST2={total:0,correct:0,sub:{算数:{t:0,c:0},国語:{t:0,c:0},社会:{t:0,c:0},理科:{t:0,c:0}}};
+var HS=[];
+var SE={qs:[],idx:0,res:[],done:false,sel:null,subs:null};
+var TID=null,TS=0,TM=1;
+
+function ge(id){return document.getElementById(id);}
+
+// ナビボタン：ページ読み込み直後に設定（window.onload不要）
+document.addEventListener('DOMContentLoaded',function(){
+  ge('NB0').addEventListener('click',function(){gH();});
+  ge('NB1').addEventListener('click',function(){gR();});
+  ge('NB2').addEventListener('click',function(){gS();});
+  ge('HBTN').addEventListener('click',function(){gH();});
+  ge('STBTN').addEventListener('click',function(){stS();});
+  ge('CKBTN').addEventListener('click',function(){chkA();});
+  ge('HTBTN').addEventListener('click',function(){shH();});
+  ge('RSTBTN').addEventListener('click',function(){rstA();});
+  var fi=['FS','FSER','FK','FU','FD'];
+  for(var i=0;i<fi.length;i++){
+    (function(id){
+      ge(id).addEventListener('change',function(){onF(id);});
+      ge(id).addEventListener('input',function(){onF(id);});
+    })(fi[i]);
+  }
+  try{var s=localStorage.getItem('jst3');if(s)ST2=JSON.parse(s);}catch(e){}
+  try{var h=localStorage.getItem('jhi3');if(h)HS=JSON.parse(h);}catch(e){}
+  upST();
+
+  // questions.jsonをfetchで読み込む
+  fetch('questions.json')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      AQ=Array.isArray(d)?d:(d.questions||d);
+      ge('LOADING').style.display='none';
+      ge('HOME_CONTENT').style.display='block';
+      rnW();bK();upMC();upDI();
+    })
+    .catch(function(e){
+      ge('LOADING').textContent='読み込みエラー: '+e.message;
+    });
+});
+
+function gH(){stpT();shP(0);upST();}
+function gR(){shP(3);rnH();}
+function gS(){shP(4);upDI();}
+function shP(n){
+  for(var i=0;i<5;i++)ge('PG'+i).classList.toggle('on',i===n);
+  ge('NB0').classList.toggle('on',n<3);ge('NB1').classList.toggle('on',n===3);ge('NB2').classList.toggle('on',n===4);
+  try{ge('MAIN').scrollTop=0;}catch(e){}
+}
+function onF(id){if(id==='FS'||id==='FSER')bK();else if(id==='FK')bU();else upMC();}
+function svS(){try{localStorage.setItem('jst3',JSON.stringify(ST2));}catch(e){}}
+function svH(){try{localStorage.setItem('jhi3',JSON.stringify(HS.slice(-50)));}catch(e){}}
+function upST(){
+  ge('H1').textContent=ST2.total;ge('H2').textContent=ST2.correct;
+  ge('H3').textContent=ST2.total>0?Math.round(ST2.correct/ST2.total*100)+'%':'--';
+  var subs=['算数','国語','社会','理科'];
+  for(var i=0;i<subs.length;i++){var d=ST2.sub[subs[i]]||{t:0,c:0};ge(SM[subs[i]]).innerHTML=d.c+'<em>/'+d.t+'</em>';}
+}
+function rnW(){
+  var g=ge('WG'),h='';
+  for(var i=0;i<WK.length;i++){
+    var w=WK[i];
+    h+='<div class="wc" data-i="'+i+'"><div class="wct">'+w.s+'</div><div class="wcn">'+w.t+'</div>'
+      +'<div class="wb"><div class="wf" style="width:'+w.p+'%;background:'+w.c+'"></div></div>'
+      +'<div style="font-size:10px;color:var(--ht)">偏差値 '+w.p+'</div>'
+      +(w.a?'<div class="wa">'+w.a+'</div>':'')+'</div>';
+  }
+  g.innerHTML=h;
+  g.addEventListener('click',function(e){
+    var el=e.target;while(el&&el!==g){if(el.classList.contains('wc')){pW(parseInt(el.getAttribute('data-i'),10));return;}el=el.parentNode;}
+  });
+}
+function pW(i){
+  var cs=document.querySelectorAll('.wc');for(var j=0;j<cs.length;j++)cs[j].classList.toggle('on',j===i);
+  var w=WK[i];ge('FS').value=w.fs||'';ge('FSER').value=w.fsr||'';bK();
+  if(w.fk!=null){ge('FK').value=String(w.fk);bU();}upMC();
+}
+function pl(){
+  var s=ge('FS').value,sr=ge('FSER').value,kr=ge('FK').value,u=ge('FU').value,d=ge('FD').value;
+  var k=kr===''?null:parseInt(kr,10);var r=[];
+  for(var i=0;i<AQ.length;i++){
+    var q=AQ[i];
+    if(s&&q.subject!==s)continue;if(sr&&q.series!==sr)continue;
+    if(k!==null&&q.kai!==k)continue;if(u&&q.unit!==u)continue;if(d&&q.diff!==d)continue;
+    r.push(q);
+  }
+  return r;
+}
+function bK(){
+  var s=ge('FS').value,sr=ge('FSER').value,sel=ge('FK'),cur=sel.value;
+  sel.innerHTML='<option value="">全回</option>';
+  var seen={};
+  for(var i=0;i<AQ.length;i++){var q=AQ[i];if(s&&q.subject!==s)continue;if(sr&&q.series!==sr)continue;seen[q.kai]=1;}
+  var ks=[];for(var k in seen)ks.push(+k);ks.sort(function(a,b){return a-b;});
+  for(var i=0;i<ks.length;i++){var o=document.createElement('option');o.value=String(ks[i]);o.textContent='第'+ks[i]+'回';sel.appendChild(o);}
+  if(cur){var ex=sel.querySelector('option[value="'+cur+'"]');if(ex)sel.value=cur;}
+  bU();
+}
+function bU(){
+  var s=ge('FS').value,sr=ge('FSER').value,kr=ge('FK').value,sel=ge('FU');
+  sel.innerHTML='<option value="">全単元</option>';sel.disabled=!kr;
+  if(!kr){upMC();return;}
+  var k=parseInt(kr,10),seen={};
+  for(var i=0;i<AQ.length;i++){var q=AQ[i];if(s&&q.subject!==s)continue;if(sr&&q.series!==sr)continue;if(q.kai!==k)continue;seen[q.unit]=1;}
+  for(var u in seen){var o=document.createElement('option');o.value=u;o.textContent=u;sel.appendChild(o);}
+  upMC();
+}
+function upMC(){var p=pl(),el=ge('MC');el.textContent='該当：'+p.length+'問';el.style.color=p.length===0?'var(--rd)':'var(--mt)';}
+function stS(){
+  var p=pl();if(!p.length){alert('条件に合う問題がありません');return;}
+  var sh=p.slice();for(var i=sh.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=sh[i];sh[i]=sh[j];sh[j]=t;}
+  var cnt=parseInt(ge('FC').value)||3;
+  SE={qs:cnt>0?sh.slice(0,cnt):sh,idx:0,res:[],done:false,sel:null,subs:null};
+  var cs=document.querySelectorAll('.wc');for(var i=0;i<cs.length;i++)cs[i].classList.remove('on');
+  shP(1);rnQ();
+}
+function gSubs(ans){
+  var s=[],pos=0;
+  while(pos<ans.length){
+    var p=ans.indexOf('(',pos);if(p<0)break;
+    var e=ans.indexOf(')',p+1);if(e<0)break;
+    var num=ans.slice(p+1,e),ok=true;
+    for(var ci=0;ci<num.length;ci++){var cc=num.charCodeAt(ci);if(cc<48||cc>57){ok=false;break;}}
+    if(!ok){pos=e+1;continue;}
+    var nx=ans.length,np=ans.indexOf('(',e+1);if(np>=0)nx=np;
+    var a=ans.slice(e+1,nx).trim();
+    while(a.length>0){var fc=a.charCodeAt(0);if(fc===32||fc===12288||fc===58||fc===65306||fc===10||fc===13)a=a.slice(1);else break;}
+    s.push({n:num,a:a});pos=e+1;
+  }
+  return s.length>=2?s:null;
+}
+function trC(c){
+  if(c.length>2&&(c[0]==='ア'||c[0]==='イ'||c[0]==='ウ'||c[0]==='エ')){var c2=c.charCodeAt(1);if(c2===46||c2===65294)return c.slice(2).trim();}return c;
+}
+function rnQ(){
+  SE.done=false;SE.sel=null;SE.subs=null;
+  var q=SE.qs[SE.idx];
+  ge('PP').textContent=(SE.idx+1)+'/'+SE.qs.length+'問';
+  var dh='';
+  for(var i=0;i<SE.qs.length;i++){var c='dt';if(i<SE.idx)c+=' '+(SE.res[i]?'ok':'ng');else if(i===SE.idx)c+=' cr';dh+='<div class="'+c+'"></div>';}
+  ge('PD').innerHTML=dh;
+  var fk=q.fmt==='choice'?'choice':'text';
+  var sec=q.time||((DT[q.diff]||{})[fk]||120);
+  var m=Math.floor(sec/60),s=sec-m*60;
+  ge('TI').textContent='目安 '+(m?m+'分':'')+s+'秒';
+  stT(sec);
+  ge('QM').innerHTML='<span class="tg '+(STAG[q.subject]||'')+'">'+q.subject+'</span>'
+    +'<span class="tg '+(DTAG[q.diff]||'')+'">'+q.diff+'</span>'
+    +'<span class="tg" style="background:var(--bg);color:var(--mt);font-size:10px">第'+q.kai+'回</span>';
+  ge('QX').textContent=q.question;
+  ge('HA').innerHTML='';ge('RA').innerHTML='';
+  var qi=ge('QI');
+  if(q.fmt==='choice'&&q.choices&&q.choices.length){
+    var lb=['ア','イ','ウ','エ'],h='<div class="cs">';
+    for(var i=0;i<q.choices.length;i++)
+      h+='<button class="cb" data-l="'+lb[i]+'"><span class="cl">'+lb[i]+'．</span><span>'+trC(q.choices[i])+'</span></button>';
+    qi.innerHTML=h+'</div>';
+    var bs=qi.querySelectorAll('.cb');
+    for(var i=0;i<bs.length;i++){
+      bs[i].addEventListener('click',function(){
+        if(SE.done)return;SE.sel=this.getAttribute('data-l');
+        var al=ge('QI').querySelectorAll('.cb');
+        for(var j=0;j<al.length;j++)al[j].classList.toggle('sl',al[j]===this);
+      });
+    }
+  } else {
+    var sb=gSubs(q.answer||'');
+    if(sb){
+      SE.subs=sb;var h='';
+      for(var i=0;i<sb.length;i++)
+        h+='<div class="sg2"><div class="sl2">('+sb[i].n+') の答え</div><textarea class="ta" id="TA'+sb[i].n+'" rows="2" placeholder="答えを入力..."></textarea></div>';
+      qi.innerHTML=h;
+    } else {
+      qi.innerHTML='<textarea class="ta" id="TA0" placeholder="答えを入力..."></textarea>';
+    }
+  }
+}
+function shH(){var q=SE.qs[SE.idx];if(q)ge('HA').innerHTML='<div class="htbox">&#128161; '+q.hint+'</div>';}
+function nm(s){
+  var r='';for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);if(c===32||c===12288||c===10||c===13)continue;r+=s[i].toLowerCase();}return r;
+}
+// 表記ゆれを正規化する
+function nrm(s){
+  s=nm(s);
+  // 単位表記の統一（cm²⇔cm2、m²⇔m2、cm³⇔cm3等）
+  s=s.replace(/cm²/g,'cm2').replace(/cm³/g,'cm3').replace(/m²/g,'m2').replace(/m³/g,'m3');
+  // 数字の後の単位（「円」「度」「m」「km」「cm」「本」「個」「袋」「kg」「g」等）を含む場合と含まない場合を吸収
+  // 漢数字・算用数字の混在正規化
+  var kn={'一':'1','二':'2','三':'3','四':'4','五':'5','六':'6','七':'7','八':'8','九':'9','十':'10','百':'100','千':'1000'};
+  for(var k in kn)s=s.split(k).join(kn[k]);
+  // 全角数字→半角
+  s=s.replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0);});
+  // 「時速○km」→「○km」、「○km/h」→「○km」などゆれを吸収
+  s=s.replace(/時速/g,'').replace(/分速/g,'').replace(/秒速/g,'');
+  // 小数点の表記ゆれ
+  s=s.replace(/・/g,'.');
+  return s;
+}
+// 数値を抽出して比較（単位が違っても数値が合っていれば正解）
+function extractNums(s){
+  var matches=s.match(/\d+(?:\.\d+)?/g);
+  return matches?matches.map(Number):[];
+}
+// 答えが数値系かどうか判定
+function isNumericAnswer(s){
+  return /^\d/.test(s.trim()) || /^\(1\)/.test(s.trim());
+}
+// メイン答え合わせ関数
+function mA(ua,ca){
+  var u=nrm(ua), c=nrm(ca);
+  // 完全一致
+  if(u===c)return true;
+  // 部分一致（片方がもう片方を含む）
+  if(u.indexOf(c)>=0||c.indexOf(u)>=0)return true;
+  // 数値比較：単位を除いた数値が一致するか
+  var un=extractNums(u), cn=extractNums(c);
+  if(un.length>0&&cn.length>0&&un.length===cn.length){
+    var allMatch=true;
+    for(var i=0;i<un.length;i++){if(Math.abs(un[i]-cn[i])>0.001){allMatch=false;break;}}
+    if(allMatch)return true;
+  }
+  // 分数の表記ゆれ：4/6と2/3（同じ値）
+  var uf=u.match(/(\d+)\/(\d+)/), cf=c.match(/(\d+)\/(\d+)/);
+  if(uf&&cf){
+    if(Math.abs(parseInt(uf[1])*parseInt(cf[2])-parseInt(uf[2])*parseInt(cf[1]))<0.001)return true;
+  }
+  // 割合：0.5と50%と1/2を同一視
+  var uPct=u.replace('%','').replace('％',''), cPct=c.replace('%','').replace('％','');
+  if(!isNaN(parseFloat(uPct))&&!isNaN(parseFloat(cPct))){
+    var uv=parseFloat(uPct), cv=parseFloat(cPct);
+    // 一方がパーセント表記（>1）でもう一方が小数（<=1）の場合
+    if((uv>1&&cv<=1&&Math.abs(uv/100-cv)<0.001)||(cv>1&&uv<=1&&Math.abs(cv/100-uv)<0.001))return true;
+  }
+  return false;
+}
+function chkA(){
+  if(SE.done)return;
+  var q=SE.qs[SE.idx];var ok=false;
+  if(q.fmt==='choice'){
+    if(!SE.sel){alert('選択肢を選んでください');return;}
+    var cl=q.answer.charAt(0);ok=SE.sel===cl;
+    var bs=ge('QI').querySelectorAll('.cb');
+    for(var i=0;i<bs.length;i++){bs[i].classList.remove('sl');if(bs[i].getAttribute('data-l')===cl)bs[i].classList.add('ok');else if(bs[i].getAttribute('data-l')===SE.sel&&!ok)bs[i].classList.add('ng');}
+  } else if(SE.subs){
+    var emp=false;
+    for(var i=0;i<SE.subs.length;i++){var ta=ge('TA'+SE.subs[i].n);if(!ta||ta.value.trim()===''){emp=true;break;}}
+    if(emp){alert('全ての答えを入力してください');return;}
+    ok=true;
+    for(var i=0;i<SE.subs.length;i++){if(!mA(ge('TA'+SE.subs[i].n).value,SE.subs[i].a))ok=false;}
+  } else {
+    var ta=ge('TA0');if(!ta||ta.value.trim()===''){alert('答えを入力してください');return;}
+    ok=mA(ta.value,q.answer||'');
+  }
+  stpT();SE.done=true;ST2.total++;
+  var sub=q.subject;if(!ST2.sub[sub])ST2.sub[sub]={t:0,c:0};ST2.sub[sub].t++;
+  if(ok){ST2.correct++;ST2.sub[sub].c++;}
+  SE.res[SE.idx]=ok;svS();upST();
+  var hn=SE.idx<SE.qs.length-1;
+  ge('RA').innerHTML='<div class="exp '+(ok?'ok':'ng')+'">'
+    +'<div class="exh">'+(ok?'&#9989; 正解！':'&#10060; 不正解。正解：'+q.answer)+'</div>'
+    +(q.explanation||'')+(q.point?'<div class="pt">&#128204; '+q.point+'</div>':'')
+    +'</div><button class="nxbtn" id="NX">'+(hn?'次の問題へ &#8594;':'結果を見る &#8594;')+'</button>';
+  ge('NX').addEventListener('click',function(){if(hn){SE.idx++;rnQ();}else shR();});
+}
+function shR(){
+  stpT();var c=0;for(var i=0;i<SE.res.length;i++)if(SE.res[i])c++;
+  var t=SE.qs.length,p=Math.round(c/t*100);
+  var cm=p===100?'&#127881; パーフェクト！':p>=80?'&#127775; すばらしい！':p>=60?'&#128077; よくできました':p>=40?'&#128218; もう一度！':'&#128170; 復習しよう';
+  var sc=ge('RS');sc.textContent=c+'/'+t;sc.style.color=p>=80?'var(--gn)':p>=50?'var(--am)':'var(--rd)';
+  ge('RL').textContent='問正解（'+p+'%）';ge('RM').innerHTML=cm;
+  var bd='';for(var i=0;i<SE.res.length;i++)bd+='<span style="font-size:13px;color:'+(SE.res[i]?'var(--gn)':'var(--rd)')+'">'+(i+1)+'問：'+(SE.res[i]?'○':'×')+'</span> ';
+  ge('RB').innerHTML=bd;
+  HS.push({d:new Date().toLocaleDateString('ja-JP'),s:c+'/'+t,p:p});svH();shP(2);
+}
+function stT(sec){stpT();if(sec===undefined)return;TS=sec;TM=sec;rT();TID=setInterval(function(){TS--;rT();if(TS<=-60)stpT();},1000);}
+function stpT(){clearInterval(TID);TID=null;}
+function rT(){
+  var el=ge('TN'),fl=ge('TF');if(!el)return;
+  var a=TS<0?-TS:TS,m=Math.floor(a/60),s=a-m*60;
+  el.textContent=(TS<0?'-':'')+m+':'+('0'+s).slice(-2);
+  el.className='tn'+(TS<=0?' ov':TS<=TM*0.3?' wn':'');
+  if(fl){fl.style.width=Math.max(0,TS/TM*100)+'%';fl.style.background=TS<=0?'var(--rd)':TS<=TM*0.3?'var(--am)':'var(--bl)';}
+}
+function rnH(){
+  var el=ge('HL');
+  if(!HS.length){el.innerHTML='<div class="em">学習履歴がありません</div>';return;}
+  var h='<div class="hl">';
+  for(var i=HS.length-1;i>=0;i--){var x=HS[i];h+='<div class="hlr"><div style="font-size:13px">'+x.d+'</div><div style="font-size:15px;font-weight:700;color:'+(x.p>=80?'var(--gn)':'var(--rd)')+'">'+x.s+'（'+x.p+'%）</div></div>';}
+  el.innerHTML=h+'</div>';
+}
+function upDI(){
+  var el=ge('DI');if(!el)return;
+  if(!AQ.length){el.textContent='読み込み中...';return;}
+  var by={};for(var i=0;i<AQ.length;i++){var s=AQ[i].subject;by[s]=(by[s]||0)+1;}
+  var t='読込済：'+AQ.length+'問 — ';var ps=[];for(var s in by)ps.push(s+':'+by[s]);
+  el.textContent=t+ps.join(' / ');
+}
+function rstA(){
+  if(!confirm('全成績・履歴をリセットしますか？'))return;
+  ST2={total:0,correct:0,sub:{算数:{t:0,c:0},国語:{t:0,c:0},社会:{t:0,c:0},理科:{t:0,c:0}}};
+  HS=[];svS();svH();upST();alert('リセットしました');
+}
+</script>
+</body>
+</html>
