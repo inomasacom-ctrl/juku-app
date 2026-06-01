@@ -320,7 +320,7 @@ function upMC(){var p=pl(),el=ge('MC');el.textContent='該当：'+p.length+'問'
 function stS(){
   var p=pl();if(!p.length){alert('条件に合う問題がありません');return;}
   var sh=p.slice();for(var i=sh.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=sh[i];sh[i]=sh[j];sh[j]=t;}
-  var cnt=parseInt(ge('FC').value)||3;
+  var cnt=parseInt(ge('FC').value,10);if(isNaN(cnt))cnt=3;
   SE={qs:cnt>0?sh.slice(0,cnt):sh,idx:0,res:[],done:false,sel:null,subs:null};
   var cs=document.querySelectorAll('.wc');for(var i=0;i<cs.length;i++)cs[i].classList.remove('on');
   shP(1);rnQ();
