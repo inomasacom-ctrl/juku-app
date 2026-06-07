@@ -286,13 +286,22 @@ function pW(i){
   var w=WK[i];ge('FS').value=w.fs||'';ge('FSER').value=w.fsr||'';bK();
   if(w.fk!=null){ge('FK').value=String(w.fk);bU();}upMC();
 }
+// 総合回（第5・10・15・20回）→ その範囲の構成回
+var SOGO={5:[1,2,3,4],10:[6,7,8,9],15:[11,12,13,14],20:[16,17,18,19]};
+// 選んだ回kに対し、問題の回qkが該当するか（総合回ならその構成回も含める）
+function kaiMatch(qk,k){
+  if(qk===k)return true;
+  var c=SOGO[k];
+  if(c){for(var i=0;i<c.length;i++){if(qk===c[i])return true;}}
+  return false;
+}
 function pl(){
   var s=ge('FS').value,sr=ge('FSER').value,kr=ge('FK').value,u=ge('FU').value,d=ge('FD').value;
   var k=kr===''?null:parseInt(kr,10);var r=[];
   for(var i=0;i<AQ.length;i++){
     var q=AQ[i];
     if(s&&q.subject!==s)continue;if(sr&&q.series!==sr)continue;
-    if(k!==null&&q.kai!==k)continue;if(u&&q.unit!==u)continue;if(d&&q.diff!==d)continue;
+    if(k!==null&&!kaiMatch(q.kai,k))continue;if(u&&q.unit!==u)continue;if(d&&q.diff!==d)continue;
     r.push(q);
   }
   return r;
@@ -302,6 +311,7 @@ function bK(){
   sel.innerHTML='<option value="">全回</option>';
   var seen={};
   for(var i=0;i<AQ.length;i++){var q=AQ[i];if(s&&q.subject!==s)continue;if(sr&&q.series!==sr)continue;seen[q.kai]=1;}
+  for(var sg in SOGO){var cc=SOGO[sg];for(var ci=0;ci<cc.length;ci++){if(seen[cc[ci]]){seen[+sg]=1;break;}}}
   var ks=[];for(var k in seen)ks.push(+k);ks.sort(function(a,b){return a-b;});
   for(var i=0;i<ks.length;i++){var o=document.createElement('option');o.value=String(ks[i]);o.textContent='第'+ks[i]+'回';sel.appendChild(o);}
   if(cur){var ex=sel.querySelector('option[value="'+cur+'"]');if(ex)sel.value=cur;}
@@ -312,7 +322,7 @@ function bU(){
   sel.innerHTML='<option value="">全単元</option>';sel.disabled=!kr;
   if(!kr){upMC();return;}
   var k=parseInt(kr,10),seen={};
-  for(var i=0;i<AQ.length;i++){var q=AQ[i];if(s&&q.subject!==s)continue;if(sr&&q.series!==sr)continue;if(q.kai!==k)continue;seen[q.unit]=1;}
+  for(var i=0;i<AQ.length;i++){var q=AQ[i];if(s&&q.subject!==s)continue;if(sr&&q.series!==sr)continue;if(!kaiMatch(q.kai,k))continue;seen[q.unit]=1;}
   for(var u in seen){var o=document.createElement('option');o.value=u;o.textContent=u;sel.appendChild(o);}
   upMC();
 }
