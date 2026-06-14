@@ -415,6 +415,8 @@ function nrm(s){
   s=s.replace(/時速/g,'').replace(/分速/g,'').replace(/秒速/g,'');
   // 小数点の表記ゆれ
   s=s.replace(/・/g,'.');
+  // 句読点・区切り記号・かっこを無視（記号のゆれを吸収）
+  s=s.replace(/[、。，,「」『』（）\(\):：;；]/g,'');
   return s;
 }
 // 数値を抽出して比較（単位が違っても数値が合っていれば正解）
@@ -454,25 +456,21 @@ function mA(ua,ca){
   }
   return false;
 }
-function chkA(){
-  if(SE.done)return;
-  var q=SE.qs[SE.idx];var ok=false;
-  if(q.fmt==='choice'){
-    if(!SE.sel){alert('選択肢を選んでください');return;}
-    var cl=q.answer.charAt(0);ok=SE.sel===cl;
-    var bs=ge('QI').querySelectorAll('.cb');
-    for(var i=0;i<bs.length;i++){bs[i].classList.remove('sl');if(bs[i].getAttribute('data-l')===cl)bs[i].classList.add('ok');else if(bs[i].getAttribute('data-l')===SE.sel&&!ok)bs[i].classList.add('ng');}
-  } else if(SE.subs){
-    var emp=false;
-    for(var i=0;i<SE.subs.length;i++){var ta=ge('TA'+SE.subs[i].n);if(!ta||ta.value.trim()===''){emp=true;break;}}
-    if(emp){alert('全ての答えを入力してください');return;}
-    ok=true;
-    for(var i=0;i<SE.subs.length;i++){if(!mA(ge('TA'+SE.subs[i].n).value,SE.subs[i].a))ok=false;}
-  } else {
-    var ta=ge('TA0');if(!ta||ta.value.trim()===''){alert('答えを入力してください');return;}
-    ok=mA(ta.value,q.answer||'');
-  }
-  stpT();SE.done=true;ST2.total++;
+// 記述（説明）系の答えかどうか。数値の列挙や短い用語は自動採点、長い文は自己採点。
+function isDesc(ans){
+  var t=(ans||'').trim();
+  if(t==='')return false;
+  if(/^[0-9０-９\s,，、\.．\/／]+$/.test(t))return false; // 数値の列挙は自動採点
+  if(t.indexOf('。')>=0)return true;                     // 文末がある＝説明文
+  if(/[→⇒＝=]/.test(t))return true;                      // 順序・対応を含む
+  if((t.match(/[・、，,]/g)||[]).length>=2)return true;    // 複数要素の列挙
+  if(t.length>=12)return true;                           // 長い答えは自己採点
+  return false;
+}
+// 結果を確定して採点・解説表示
+function finRes(ok){
+  var q=SE.qs[SE.idx];
+  ST2.total++;
   var sub=q.subject;if(!ST2.sub[sub])ST2.sub[sub]={t:0,c:0};ST2.sub[sub].t++;
   if(ok){ST2.correct++;ST2.sub[sub].c++;}
   SE.res[SE.idx]=ok;svS();upST();
@@ -482,6 +480,43 @@ function chkA(){
     +(q.explanation||'')+(q.point?'<div class="pt">&#128204; '+q.point+'</div>':'')
     +'</div><button class="nxbtn" id="NX">'+(hn?'次の問題へ &#8594;':'結果を見る &#8594;')+'</button>';
   ge('NX').addEventListener('click',function(){if(hn){SE.idx++;rnQ();}else shR();});
+}
+// 記述問題：模範解答を見せて自分で○×を選ぶ
+function selfJudge(){
+  var q=SE.qs[SE.idx],model;
+  if(SE.subs){var t='';for(var i=0;i<SE.subs.length;i++)t+='<div>('+SE.subs[i].n+') '+SE.subs[i].a+'</div>';model=t;}
+  else model=q.answer||'';
+  ge('RA').innerHTML='<div class="exp">'
+    +'<div class="exh">&#128221; 記述問題です。模範解答と見くらべて、自分で○か×かを選んでください。</div>'
+    +'<div class="pt" style="margin-top:8px"><b>模範解答：</b><br>'+model+'</div>'
+    +'<div style="display:flex;gap:10px;margin-top:12px">'
+    +'<button class="nxbtn" id="SJO" style="background:var(--gn)">&#9989; 合っていた</button>'
+    +'<button class="nxbtn" id="SJX" style="background:var(--rd)">&#10060; ちがった</button></div></div>';
+  ge('SJO').addEventListener('click',function(){finRes(true);});
+  ge('SJX').addEventListener('click',function(){finRes(false);});
+}
+function chkA(){
+  if(SE.done)return;
+  var q=SE.qs[SE.idx];
+  if(q.fmt==='choice'){
+    if(!SE.sel){alert('選択肢を選んでください');return;}
+    var cl=q.answer.charAt(0),ok=SE.sel===cl;
+    var bs=ge('QI').querySelectorAll('.cb');
+    for(var i=0;i<bs.length;i++){bs[i].classList.remove('sl');if(bs[i].getAttribute('data-l')===cl)bs[i].classList.add('ok');else if(bs[i].getAttribute('data-l')===SE.sel&&!ok)bs[i].classList.add('ng');}
+    stpT();SE.done=true;finRes(ok);return;
+  }
+  if(SE.subs){
+    for(var i=0;i<SE.subs.length;i++){var ta=ge('TA'+SE.subs[i].n);if(!ta||ta.value.trim()===''){alert('全ての答えを入力してください');return;}}
+    var auto=true,desc=false;
+    for(var i=0;i<SE.subs.length;i++){if(!mA(ge('TA'+SE.subs[i].n).value,SE.subs[i].a))auto=false;if(isDesc(SE.subs[i].a))desc=true;}
+    stpT();SE.done=true;
+    if(auto)finRes(true);else if(desc)selfJudge();else finRes(false);
+    return;
+  }
+  var ta=ge('TA0');if(!ta||ta.value.trim()===''){alert('答えを入力してください');return;}
+  var ok=mA(ta.value,q.answer||'');
+  stpT();SE.done=true;
+  if(ok)finRes(true);else if(isDesc(q.answer||''))selfJudge();else finRes(false);
 }
 function shR(){
   stpT();var c=0;for(var i=0;i<SE.res.length;i++)if(SE.res[i])c++;
