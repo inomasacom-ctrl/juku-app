@@ -97,6 +97,11 @@ select:disabled{opacity:.4}
   <div class="pg on" id="PG0">
     <div id="LOADING" class="loading">&#128218; 問題データを読み込み中...<br><small style="color:var(--ht)">しばらくお待ちください</small></div>
     <div id="HOME_CONTENT" style="display:none">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span style="font-size:13px;color:var(--mt);white-space:nowrap">学習者</span>
+      <button id="PRF1" type="button">① 1人目</button>
+      <button id="PRF2" type="button">② 2人目</button>
+    </div>
     <div class="sg">
       <div class="sc"><div class="sn" id="H1" style="color:var(--bl)">0</div><div class="sl">累計</div></div>
       <div class="sc"><div class="sn" id="H2" style="color:var(--gn)">0</div><div class="sl">正解</div></div>
@@ -155,6 +160,11 @@ select:disabled{opacity:.4}
           </select>
         </div>
       </div>
+      <div class="fr">
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;padding:4px 2px">
+          <input type="checkbox" id="FRV" style="width:18px;height:18px"> 復習モード（まちがえた×問題だけ出す）
+        </label>
+      </div>
       <div class="mc" id="MC">---</div>
       <button class="stbtn" id="STBTN">出題開始 &#9654;</button>
     </div>
@@ -186,6 +196,15 @@ select:disabled{opacity:.4}
       <div class="lbl">問題データ</div>
       <div id="DI" style="font-size:13px;color:var(--mt);margin-bottom:12px"></div>
     </div>
+    <div class="card">
+      <div class="lbl">バックアップ（端末を変えるとき）</div>
+      <div style="font-size:12px;color:var(--mt);margin-bottom:8px">「書き出し」でコードを作り、新しい端末の同じらんに貼り付けて「読み込み」を押すと、いま選んでいる学習者（①または②）の成績・履歴・×リストを移せます。</div>
+      <textarea id="BKTA" style="width:100%;height:70px;font-size:11px;box-sizing:border-box" placeholder="ここにコードが出ます／貼り付けます"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="stbtn" id="BKEXP" style="flex:1">書き出し</button>
+        <button class="stbtn" id="BKIMP" style="flex:1;background:var(--gn)">読み込み</button>
+      </div>
+    </div>
     <div class="card"><div class="lbl">成績リセット</div><button class="stbtn" id="RSTBTN" style="background:var(--rd)">全成績をリセット</button></div>
   </div>
 </div>
@@ -212,8 +231,32 @@ var ST2={total:0,correct:0,sub:{算数:{t:0,c:0},国語:{t:0,c:0},社会:{t:0,c:
 var HS=[];
 var SE={qs:[],idx:0,res:[],done:false,sel:null,subs:null};
 var TID=null,TS=0,TM=1;
-
+var PROF=1, WR={};
 function ge(id){return document.getElementById(id);}
+function freshST(){return {total:0,correct:0,sub:{算数:{t:0,c:0},国語:{t:0,c:0},社会:{t:0,c:0},理科:{t:0,c:0}}};}
+function loadProf(){
+  try{var s=localStorage.getItem('jst3_'+PROF);ST2=s?JSON.parse(s):freshST();}catch(e){ST2=freshST();}
+  try{var h=localStorage.getItem('jhi3_'+PROF);HS=h?JSON.parse(h):[];}catch(e){HS=[];}
+  try{var w=localStorage.getItem('jwr3_'+PROF);WR=w?JSON.parse(w):{};}catch(e){WR={};}
+}
+function svW(){try{localStorage.setItem('jwr3_'+PROF,JSON.stringify(WR));}catch(e){}}
+function wrCount(){var n=0;for(var k in WR)n++;return n;}
+function prfStyle(active){return 'flex:1;padding:8px 10px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;'+(active?'background:#2563eb;color:#fff':'background:#e8eef5;color:#55606e');}
+function styleProf(){var b1=ge('PRF1'),b2=ge('PRF2');if(b1)b1.style.cssText=prfStyle(PROF===1);if(b2)b2.style.cssText=prfStyle(PROF===2);}
+function setProf(p){PROF=p;try{localStorage.setItem('jprof',String(p));}catch(e){}styleProf();loadProf();upST();bK();upMC();}
+function bkExport(){
+  var data={p:PROF,st:ST2,hs:HS,wr:WR},code='';
+  try{code=btoa(unescape(encodeURIComponent(JSON.stringify(data))));}catch(e){code='';}
+  var ta=ge('BKTA');if(ta){ta.value=code;ta.focus();ta.select();}
+  alert('この「コード」をコピーして、新しい端末の同じらんに貼り付け、「読み込み」を押してください。');
+}
+function bkImport(){
+  var ta=ge('BKTA');if(!ta||!ta.value.trim()){alert('コードを貼り付けてください');return;}
+  var data;try{data=JSON.parse(decodeURIComponent(escape(atob(ta.value.trim()))));}catch(e){alert('コードが正しくありません');return;}
+  if(!confirm('今のプロフィール（学習者'+PROF+'）に読み込みます。今のデータは上書きされます。よろしいですか？'))return;
+  if(data.st)ST2=data.st;if(data.hs)HS=data.hs;if(data.wr)WR=data.wr;
+  svS();svH();svW();upST();bK();upMC();alert('読み込みました');
+}
 
 // ナビボタン：ページ読み込み直後に設定（window.onload不要）
 document.addEventListener('DOMContentLoaded',function(){
@@ -225,15 +268,24 @@ document.addEventListener('DOMContentLoaded',function(){
   ge('CKBTN').addEventListener('click',function(){chkA();});
   ge('HTBTN').addEventListener('click',function(){shH();});
   ge('RSTBTN').addEventListener('click',function(){rstA();});
-  var fi=['FS','FSER','FK','FU','FD'];
+  var fi=['FS','FSER','FK','FU','FD','FRV'];
   for(var i=0;i<fi.length;i++){
     (function(id){
-      ge(id).addEventListener('change',function(){onF(id);});
-      ge(id).addEventListener('input',function(){onF(id);});
+      var el=ge(id);if(!el)return;
+      el.addEventListener('change',function(){onF(id);});
+      el.addEventListener('input',function(){onF(id);});
     })(fi[i]);
   }
-  try{var s=localStorage.getItem('jst3');if(s)ST2=JSON.parse(s);}catch(e){}
-  try{var h=localStorage.getItem('jhi3');if(h)HS=JSON.parse(h);}catch(e){}
+  // 既存データ（旧バージョン）を学習者①へ引き継ぎ（初回のみ）
+  try{if(localStorage.getItem('jst3')&&!localStorage.getItem('jst3_1'))localStorage.setItem('jst3_1',localStorage.getItem('jst3'));}catch(e){}
+  try{if(localStorage.getItem('jhi3')&&!localStorage.getItem('jhi3_1'))localStorage.setItem('jhi3_1',localStorage.getItem('jhi3'));}catch(e){}
+  try{var pp=localStorage.getItem('jprof');PROF=pp?parseInt(pp,10):1;}catch(e){PROF=1;}
+  if(ge('PRF1'))ge('PRF1').addEventListener('click',function(){setProf(1);});
+  if(ge('PRF2'))ge('PRF2').addEventListener('click',function(){setProf(2);});
+  styleProf();
+  if(ge('BKEXP'))ge('BKEXP').addEventListener('click',function(){bkExport();});
+  if(ge('BKIMP'))ge('BKIMP').addEventListener('click',function(){bkImport();});
+  loadProf();
   upST();
 
   // questions.jsonをfetchで読み込む
@@ -259,8 +311,8 @@ function shP(n){
   try{ge('MAIN').scrollTop=0;}catch(e){}
 }
 function onF(id){if(id==='FS'||id==='FSER')bK();else if(id==='FK')bU();else upMC();}
-function svS(){try{localStorage.setItem('jst3',JSON.stringify(ST2));}catch(e){}}
-function svH(){try{localStorage.setItem('jhi3',JSON.stringify(HS.slice(-50)));}catch(e){}}
+function svS(){try{localStorage.setItem('jst3_'+PROF,JSON.stringify(ST2));}catch(e){}}
+function svH(){try{localStorage.setItem('jhi3_'+PROF,JSON.stringify(HS.slice(-50)));}catch(e){}}
 function upST(){
   ge('H1').textContent=ST2.total;ge('H2').textContent=ST2.correct;
   ge('H3').textContent=ST2.total>0?Math.round(ST2.correct/ST2.total*100)+'%':'--';
@@ -297,11 +349,13 @@ function kaiMatch(qk,k){
 }
 function pl(){
   var s=ge('FS').value,sr=ge('FSER').value,kr=ge('FK').value,u=ge('FU').value,d=ge('FD').value;
+  var rev=ge('FRV')&&ge('FRV').checked;
   var k=kr===''?null:parseInt(kr,10);var r=[];
   for(var i=0;i<AQ.length;i++){
     var q=AQ[i];
     if(s&&q.subject!==s)continue;if(sr&&q.series!==sr)continue;
     if(k!==null&&!kaiMatch(q.kai,k))continue;if(u&&q.unit!==u)continue;if(d&&q.diff!==d)continue;
+    if(rev&&!WR[q.id])continue;
     r.push(q);
   }
   return r;
@@ -326,7 +380,7 @@ function bU(){
   for(var u in seen){var o=document.createElement('option');o.value=u;o.textContent=u;sel.appendChild(o);}
   upMC();
 }
-function upMC(){var p=pl(),el=ge('MC');el.textContent='該当：'+p.length+'問';el.style.color=p.length===0?'var(--rd)':'var(--mt)';}
+function upMC(){var rev=ge('FRV')&&ge('FRV').checked;var p=pl(),el=ge('MC');el.textContent=(rev?'復習（×だけ）該当：':'該当：')+p.length+'問';el.style.color=p.length===0?'var(--rd)':'var(--mt)';}
 function stS(){
   var p=pl();if(!p.length){alert('条件に合う問題がありません');return;}
   var sh=p.slice();for(var i=sh.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=sh[i];sh[i]=sh[j];sh[j]=t;}
@@ -467,19 +521,33 @@ function isDesc(ans){
   if(t.length>=12)return true;                           // 長い答えは自己採点
   return false;
 }
-// 結果を確定して採点・解説表示
-function finRes(ok){
-  var q=SE.qs[SE.idx];
-  ST2.total++;
-  var sub=q.subject;if(!ST2.sub[sub])ST2.sub[sub]={t:0,c:0};ST2.sub[sub].t++;
-  if(ok){ST2.correct++;ST2.sub[sub].c++;}
-  SE.res[SE.idx]=ok;svS();upST();
-  var hn=SE.idx<SE.qs.length-1;
-  ge('RA').innerHTML='<div class="exp '+(ok?'ok':'ng')+'">'
+// 結果の表示（ok：正誤、flip：×取り消しボタンを出すか）
+function renderRes(ok,flip){
+  var q=SE.qs[SE.idx],hn=SE.idx<SE.qs.length-1;
+  var html='<div class="exp '+(ok?'ok':'ng')+'">'
     +'<div class="exh">'+(ok?'&#9989; 正解！':'&#10060; 不正解。正解：'+q.answer)+'</div>'
-    +(q.explanation||'')+(q.point?'<div class="pt">&#128204; '+q.point+'</div>':'')
-    +'</div><button class="nxbtn" id="NX">'+(hn?'次の問題へ &#8594;':'結果を見る &#8594;')+'</button>';
+    +(q.explanation||'')+(q.point?'<div class="pt">&#128204; '+q.point+'</div>':'')+'</div>';
+  if(!ok&&flip)html+='<button class="nxbtn" id="FLIP" style="background:var(--gn);margin-bottom:8px">&#9989; やっぱり合っていた（○にする）</button>';
+  html+='<button class="nxbtn" id="NX">'+(hn?'次の問題へ &#8594;':'結果を見る &#8594;')+'</button>';
+  ge('RA').innerHTML=html;
   ge('NX').addEventListener('click',function(){if(hn){SE.idx++;rnQ();}else shR();});
+  if(!ok&&flip)ge('FLIP').addEventListener('click',function(){flipCorrect();});
+}
+// 結果を確定して採点（正解なら×リストから外す／不正解なら×リストに入れる）
+function finRes(ok){
+  var q=SE.qs[SE.idx],sub=q.subject;
+  ST2.total++;if(!ST2.sub[sub])ST2.sub[sub]={t:0,c:0};ST2.sub[sub].t++;
+  if(ok){ST2.correct++;ST2.sub[sub].c++;delete WR[q.id];}else{WR[q.id]=1;}
+  SE.res[SE.idx]=ok;svS();svW();upST();
+  renderRes(ok,!ok);
+}
+// ×を取り消して○に直す（自動採点・自己採点どちらの×にも対応）
+function flipCorrect(){
+  if(SE.res[SE.idx]===true)return;
+  var q=SE.qs[SE.idx],sub=q.subject;
+  ST2.correct++;if(!ST2.sub[sub])ST2.sub[sub]={t:0,c:0};ST2.sub[sub].c++;
+  delete WR[q.id];SE.res[SE.idx]=true;svS();svW();upST();
+  renderRes(true,false);
 }
 // 記述問題：模範解答を見せて自分で○×を選ぶ
 function selfJudge(){
@@ -552,9 +620,8 @@ function upDI(){
   el.textContent=t+ps.join(' / ');
 }
 function rstA(){
-  if(!confirm('全成績・履歴をリセットしますか？'))return;
-  ST2={total:0,correct:0,sub:{算数:{t:0,c:0},国語:{t:0,c:0},社会:{t:0,c:0},理科:{t:0,c:0}}};
-  HS=[];svS();svH();upST();alert('リセットしました');
+  if(!confirm('学習者'+PROF+'の成績・履歴・×リストをリセットしますか？（もう一方の学習者には影響しません）'))return;
+  ST2=freshST();HS=[];WR={};svS();svH();svW();upST();bK();upMC();alert('リセットしました');
 }
 </script>
 </body>
