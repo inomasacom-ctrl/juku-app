@@ -165,6 +165,18 @@ select:disabled{opacity:.4}
           <input type="checkbox" id="FRV" style="width:18px;height:18px"> 復習モード（まちがえた×問題だけ出す）
         </label>
       </div>
+      <div class="fr">
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;padding:4px 2px">
+          <input type="checkbox" id="FEW" style="width:18px;height:18px"> 一度でも間違えた問題を出す（正解しても残す）
+        </label>
+      </div>
+      <div class="fr" style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mt);padding:0 2px 4px 28px">
+        連続
+        <select id="FTH" style="padding:4px 6px;border-radius:6px;border:1px solid #ccc;font-size:13px">
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+        回正解で卒業（出題されなくなる）
+      </div>
       <div class="mc" id="MC">---</div>
       <button class="stbtn" id="STBTN">出題開始 &#9654;</button>
     </div>
@@ -231,21 +243,26 @@ var ST2={total:0,correct:0,sub:{算数:{t:0,c:0},国語:{t:0,c:0},社会:{t:0,c:
 var HS=[];
 var SE={qs:[],idx:0,res:[],done:false,sel:null,subs:null};
 var TID=null,TS=0,TM=1;
-var PROF=1, WR={};
+var PROF=1, WR={}, EW={}, TH=3;
 function ge(id){return document.getElementById(id);}
 function freshST(){return {total:0,correct:0,sub:{算数:{t:0,c:0},国語:{t:0,c:0},社会:{t:0,c:0},理科:{t:0,c:0}}};}
 function loadProf(){
   try{var s=localStorage.getItem('jst3_'+PROF);ST2=s?JSON.parse(s):freshST();}catch(e){ST2=freshST();}
   try{var h=localStorage.getItem('jhi3_'+PROF);HS=h?JSON.parse(h):[];}catch(e){HS=[];}
   try{var w=localStorage.getItem('jwr3_'+PROF);WR=w?JSON.parse(w):{};}catch(e){WR={};}
+  try{var v=localStorage.getItem('jew3_'+PROF);EW=v?JSON.parse(v):{};}catch(e){EW={};}
 }
 function svW(){try{localStorage.setItem('jwr3_'+PROF,JSON.stringify(WR));}catch(e){}}
+function svEW(){try{localStorage.setItem('jew3_'+PROF,JSON.stringify(EW));}catch(e){}}
 function wrCount(){var n=0;for(var k in WR)n++;return n;}
+// 卒業しきい値（連続正解◯回）：学習者共通の設定
+function loadTH(){try{var t=localStorage.getItem('jth3');TH=t?parseInt(t,10):3;}catch(e){TH=3;}if(isNaN(TH)||TH<1)TH=3;}
+function svTH(){try{localStorage.setItem('jth3',String(TH));}catch(e){}}
 function prfStyle(active){return 'flex:1;padding:8px 10px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;'+(active?'background:#2563eb;color:#fff':'background:#e8eef5;color:#55606e');}
 function styleProf(){var b1=ge('PRF1'),b2=ge('PRF2');if(b1)b1.style.cssText=prfStyle(PROF===1);if(b2)b2.style.cssText=prfStyle(PROF===2);}
 function setProf(p){PROF=p;try{localStorage.setItem('jprof',String(p));}catch(e){}styleProf();loadProf();upST();bK();upMC();}
 function bkExport(){
-  var data={p:PROF,st:ST2,hs:HS,wr:WR},code='';
+  var data={p:PROF,st:ST2,hs:HS,wr:WR,ew:EW},code='';
   try{code=btoa(unescape(encodeURIComponent(JSON.stringify(data))));}catch(e){code='';}
   var ta=ge('BKTA');if(ta){ta.value=code;ta.focus();ta.select();}
   alert('この「コード」をコピーして、新しい端末の同じらんに貼り付け、「読み込み」を押してください。');
@@ -254,8 +271,8 @@ function bkImport(){
   var ta=ge('BKTA');if(!ta||!ta.value.trim()){alert('コードを貼り付けてください');return;}
   var data;try{data=JSON.parse(decodeURIComponent(escape(atob(ta.value.trim()))));}catch(e){alert('コードが正しくありません');return;}
   if(!confirm('今のプロフィール（学習者'+PROF+'）に読み込みます。今のデータは上書きされます。よろしいですか？'))return;
-  if(data.st)ST2=data.st;if(data.hs)HS=data.hs;if(data.wr)WR=data.wr;
-  svS();svH();svW();upST();bK();upMC();alert('読み込みました');
+  if(data.st)ST2=data.st;if(data.hs)HS=data.hs;if(data.wr)WR=data.wr;if(data.ew)EW=data.ew;
+  svS();svH();svW();svEW();upST();bK();upMC();alert('読み込みました');
 }
 
 // ナビボタン：ページ読み込み直後に設定（window.onload不要）
@@ -268,7 +285,7 @@ document.addEventListener('DOMContentLoaded',function(){
   ge('CKBTN').addEventListener('click',function(){chkA();});
   ge('HTBTN').addEventListener('click',function(){shH();});
   ge('RSTBTN').addEventListener('click',function(){rstA();});
-  var fi=['FS','FSER','FK','FU','FD','FRV'];
+  var fi=['FS','FSER','FK','FU','FD','FRV','FEW','FTH'];
   for(var i=0;i<fi.length;i++){
     (function(id){
       var el=ge(id);if(!el)return;
@@ -276,6 +293,8 @@ document.addEventListener('DOMContentLoaded',function(){
       el.addEventListener('input',function(){onF(id);});
     })(fi[i]);
   }
+  loadTH();
+  if(ge('FTH')){ge('FTH').value=String(TH);}
   // 既存データ（旧バージョン）を学習者①へ引き継ぎ（初回のみ）
   try{if(localStorage.getItem('jst3')&&!localStorage.getItem('jst3_1'))localStorage.setItem('jst3_1',localStorage.getItem('jst3'));}catch(e){}
   try{if(localStorage.getItem('jhi3')&&!localStorage.getItem('jhi3_1'))localStorage.setItem('jhi3_1',localStorage.getItem('jhi3'));}catch(e){}
@@ -310,7 +329,7 @@ function shP(n){
   ge('NB0').classList.toggle('on',n<3);ge('NB1').classList.toggle('on',n===3);ge('NB2').classList.toggle('on',n===4);
   try{ge('MAIN').scrollTop=0;}catch(e){}
 }
-function onF(id){if(id==='FS'||id==='FSER')bK();else if(id==='FK')bU();else upMC();}
+function onF(id){if(id==='FS'||id==='FSER')bK();else if(id==='FK')bU();else if(id==='FTH'){var v=parseInt(ge('FTH').value,10);if(!isNaN(v)&&v>=1){TH=v;svTH();}upMC();}else upMC();}
 function svS(){try{localStorage.setItem('jst3_'+PROF,JSON.stringify(ST2));}catch(e){}}
 function svH(){try{localStorage.setItem('jhi3_'+PROF,JSON.stringify(HS.slice(-50)));}catch(e){}}
 function upST(){
@@ -350,12 +369,14 @@ function kaiMatch(qk,k){
 function pl(){
   var s=ge('FS').value,sr=ge('FSER').value,kr=ge('FK').value,u=ge('FU').value,d=ge('FD').value;
   var rev=ge('FRV')&&ge('FRV').checked;
+  var few=ge('FEW')&&ge('FEW').checked;
   var k=kr===''?null:parseInt(kr,10);var r=[];
   for(var i=0;i<AQ.length;i++){
     var q=AQ[i];
     if(s&&q.subject!==s)continue;if(sr&&q.series!==sr)continue;
     if(k!==null&&!kaiMatch(q.kai,k))continue;if(u&&q.unit!==u)continue;if(d&&q.diff!==d)continue;
     if(rev&&!WR[q.id])continue;
+    if(few){ if(!(q.id in EW))continue; if(EW[q.id]>=TH)continue; }
     r.push(q);
   }
   return r;
@@ -380,7 +401,7 @@ function bU(){
   for(var u in seen){var o=document.createElement('option');o.value=u;o.textContent=u;sel.appendChild(o);}
   upMC();
 }
-function upMC(){var rev=ge('FRV')&&ge('FRV').checked;var p=pl(),el=ge('MC');el.textContent=(rev?'復習（×だけ）該当：':'該当：')+p.length+'問';el.style.color=p.length===0?'var(--rd)':'var(--mt)';}
+function upMC(){var rev=ge('FRV')&&ge('FRV').checked,few=ge('FEW')&&ge('FEW').checked;var p=pl(),el=ge('MC');var lbl=few?('一度間違えた（連続'+TH+'回正解で卒業）該当：'):(rev?'復習（×だけ）該当：':'該当：');el.textContent=lbl+p.length+'問';el.style.color=p.length===0?'var(--rd)':'var(--mt)';}
 function stS(){
   var p=pl();if(!p.length){alert('条件に合う問題がありません');return;}
   var sh=p.slice();for(var i=sh.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=sh[i];sh[i]=sh[j];sh[j]=t;}
@@ -533,20 +554,30 @@ function renderRes(ok,flip){
   ge('NX').addEventListener('click',function(){if(hn){SE.idx++;rnQ();}else shR();});
   if(!ok&&flip)ge('FLIP').addEventListener('click',function(){flipCorrect();});
 }
-// 結果を確定して採点（正解なら×リストから外す／不正解なら×リストに入れる）
+// 結果を確定して採点（×リスト＋履歴リストEWの連続正解カウントも更新）
 function finRes(ok){
-  var q=SE.qs[SE.idx],sub=q.subject;
+  var q=SE.qs[SE.idx],sub=q.subject,id=q.id;
+  SE._pEW=(id in EW)?EW[id]:null; // 取り消し用に、今回採点前の履歴状態を記憶
   ST2.total++;if(!ST2.sub[sub])ST2.sub[sub]={t:0,c:0};ST2.sub[sub].t++;
-  if(ok){ST2.correct++;ST2.sub[sub].c++;delete WR[q.id];}else{WR[q.id]=1;}
-  SE.res[SE.idx]=ok;svS();svW();upST();
+  if(ok){
+    ST2.correct++;ST2.sub[sub].c++;delete WR[id];
+    if(id in EW)EW[id]=EW[id]+1; // 過去に間違えた問題なら連続正解を+1
+  }else{
+    WR[id]=1;EW[id]=0; // 一度でも間違えた→履歴に記録し、連続正解を0に
+  }
+  SE.res[SE.idx]=ok;svS();svW();svEW();upST();
   renderRes(ok,!ok);
 }
 // ×を取り消して○に直す（自動採点・自己採点どちらの×にも対応）
 function flipCorrect(){
   if(SE.res[SE.idx]===true)return;
-  var q=SE.qs[SE.idx],sub=q.subject;
+  var q=SE.qs[SE.idx],sub=q.subject,id=q.id;
   ST2.correct++;if(!ST2.sub[sub])ST2.sub[sub]={t:0,c:0};ST2.sub[sub].c++;
-  delete WR[q.id];SE.res[SE.idx]=true;svS();svW();upST();
+  delete WR[id];
+  // 本当は正解だったので、直前に付けた×を取り消す
+  if(SE._pEW===null||SE._pEW===undefined)delete EW[id]; // もともと履歴に無い→履歴にも入れない
+  else EW[id]=SE._pEW+1;                                 // 元の連続正解数＋今回の正解
+  SE.res[SE.idx]=true;svS();svW();svEW();upST();
   renderRes(true,false);
 }
 // 記述問題：模範解答を見せて自分で○×を選ぶ
@@ -620,8 +651,8 @@ function upDI(){
   el.textContent=t+ps.join(' / ');
 }
 function rstA(){
-  if(!confirm('学習者'+PROF+'の成績・履歴・×リストをリセットしますか？（もう一方の学習者には影響しません）'))return;
-  ST2=freshST();HS=[];WR={};svS();svH();svW();upST();bK();upMC();alert('リセットしました');
+  if(!confirm('学習者'+PROF+'の成績・×リスト・間違えた問題の履歴をリセットしますか？（もう一方の学習者には影響しません）'))return;
+  ST2=freshST();HS=[];WR={};EW={};svS();svH();svW();svEW();upST();bK();upMC();alert('リセットしました');
 }
 </script>
 </body>
