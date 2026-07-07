@@ -148,6 +148,7 @@ select:disabled{opacity:.4}
             <option value="S入門">S入門</option>
             <option value="S中堅">S中堅</option>
             <option value="S上位">S上位</option>
+            <option value="S最難">S最難</option>
           </select>
         </div>
         <div class="fg"><label>出題数</label>
@@ -176,6 +177,11 @@ select:disabled{opacity:.4}
           <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
         </select>
         回正解で卒業（出題されなくなる）
+      </div>
+      <div class="fr">
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;padding:4px 2px">
+          <input type="checkbox" id="FGM" style="width:18px;height:18px"> 組み分け対策（科目×難易度ごとに10問ずつバランス出題）
+        </label>
       </div>
       <div class="mc" id="MC">---</div>
       <button class="stbtn" id="STBTN">出題開始 &#9654;</button>
@@ -235,9 +241,9 @@ var WK=[
   {s:'算数',t:'計算精度・時間',p:64,c:'#85B7EB',a:'ケアレスで得点ロス',fs:'算数',fsr:'',fk:null},
   {s:'理科',t:'応用問題',p:58,c:'#97C459',a:'基礎は安定',fs:'理科',fsr:'',fk:null}
 ];
-var DT={'基本':{'choice':60,'text':90},'標準':{'choice':90,'text':150},'S入門':{'choice':120,'text':210},'S中堅':{'choice':150,'text':270},'S上位':{'choice':180,'text':360}};
+var DT={'基本':{'choice':60,'text':90},'標準':{'choice':90,'text':150},'S入門':{'choice':120,'text':210},'S中堅':{'choice':150,'text':270},'S上位':{'choice':180,'text':360},'S最難':{'choice':240,'text':480}};
 var STAG={'算数':'tg-s','国語':'tg-k','社会':'tg-sh','理科':'tg-r'};
-var DTAG={'基本':'tg-0','標準':'tg-1','S入門':'tg-2','S中堅':'tg-3','S上位':'tg-4'};
+var DTAG={'基本':'tg-0','標準':'tg-1','S入門':'tg-2','S中堅':'tg-3','S上位':'tg-4','S最難':'tg-4'};
 var SM={算数:'SS0',国語:'SS1',社会:'SS2',理科:'SS3'};
 var ST2={total:0,correct:0,sub:{算数:{t:0,c:0},国語:{t:0,c:0},社会:{t:0,c:0},理科:{t:0,c:0}}};
 var HS=[];
@@ -285,7 +291,7 @@ document.addEventListener('DOMContentLoaded',function(){
   ge('CKBTN').addEventListener('click',function(){chkA();});
   ge('HTBTN').addEventListener('click',function(){shH();});
   ge('RSTBTN').addEventListener('click',function(){rstA();});
-  var fi=['FS','FSER','FK','FU','FD','FRV','FEW','FTH'];
+  var fi=['FS','FSER','FK','FU','FD','FRV','FEW','FTH','FGM'];
   for(var i=0;i<fi.length;i++){
     (function(id){
       var el=ge(id);if(!el)return;
@@ -401,12 +407,66 @@ function bU(){
   for(var u in seen){var o=document.createElement('option');o.value=u;o.textContent=u;sel.appendChild(o);}
   upMC();
 }
-function upMC(){var rev=ge('FRV')&&ge('FRV').checked,few=ge('FEW')&&ge('FEW').checked;var p=pl(),el=ge('MC');var lbl=few?('一度間違えた（連続'+TH+'回正解で卒業）該当：'):(rev?'復習（×だけ）該当：':'該当：');el.textContent=lbl+p.length+'問';el.style.color=p.length===0?'var(--rd)':'var(--mt)';}
+function upMC(){
+  var rev=ge('FRV')&&ge('FRV').checked,few=ge('FEW')&&ge('FEW').checked,gm=ge('FGM')&&ge('FGM').checked;
+  var p=pl(),el=ge('MC');
+  if(gm){
+    // 科目×難易度ごとに min(10, 該当数) を合計
+    var cnt=0,map={};
+    for(var i=0;i<p.length;i++){var k=p[i].subject+'|'+p[i].diff;map[k]=(map[k]||0)+1;}
+    for(var k in map)cnt+=Math.min(10,map[k]);
+    el.textContent='組み分け対策 出題予定：'+cnt+'問（母集団'+p.length+'問から科目×難易度ごとに10問）';
+    el.style.color=cnt===0?'var(--rd)':'var(--mt)';
+    return;
+  }
+  var lbl=few?('一度間違えた（連続'+TH+'回正解で卒業）該当：'):(rev?'復習（×だけ）該当：':'該当：');
+  el.textContent=lbl+p.length+'問';el.style.color=p.length===0?'var(--rd)':'var(--mt)';
+}
+function shArr(a){var s=a.slice();for(var i=s.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=s[i];s[i]=s[j];s[j]=t;}return s;}
+// 組み分け対策：科目×難易度ごとに最大10問、回がかたよらないよう回ごとに順番に取る
+var GDIFFS=['基本','標準','S入門','S中堅','S上位','S最難'];
+function gmSample(pool){
+  var out=[];
+  var subs=[];
+  for(var i=0;i<pool.length;i++){if(subs.indexOf(pool[i].subject)<0)subs.push(pool[i].subject);}
+  for(var si=0;si<subs.length;si++){
+    for(var di=0;di<GDIFFS.length;di++){
+      var grp=[];
+      for(var i=0;i<pool.length;i++){var q=pool[i];if(q.subject===subs[si]&&q.diff===GDIFFS[di])grp.push(q);}
+      if(!grp.length)continue;
+      // 回ごとに分けてシャッフルし、ラウンドロビンで最大10問（特定の回にかたよらない）
+      var byKai={},kais=[];
+      for(var i=0;i<grp.length;i++){var k=grp[i].kai;if(!byKai[k]){byKai[k]=[];kais.push(k);}byKai[k].push(grp[i]);}
+      kais=shArr(kais);
+      for(var ki=0;ki<kais.length;ki++)byKai[kais[ki]]=shArr(byKai[kais[ki]]);
+      var picked=[],round=0;
+      while(picked.length<10){
+        var added=false;
+        for(var ki=0;ki<kais.length&&picked.length<10;ki++){
+          var arr=byKai[kais[ki]];
+          if(round<arr.length){picked.push(arr[round]);added=true;}
+        }
+        if(!added)break;
+        round++;
+      }
+      out=out.concat(picked);
+    }
+  }
+  return shArr(out);
+}
 function stS(){
+  var gm=ge('FGM')&&ge('FGM').checked;
   var p=pl();if(!p.length){alert('条件に合う問題がありません');return;}
-  var sh=p.slice();for(var i=sh.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=sh[i];sh[i]=sh[j];sh[j]=t;}
-  var cnt=parseInt(ge('FC').value,10);if(isNaN(cnt))cnt=3;
-  SE={qs:cnt>0?sh.slice(0,cnt):sh,idx:0,res:[],done:false,sel:null,subs:null};
+  var qs;
+  if(gm){
+    qs=gmSample(p);
+    if(!qs.length){alert('条件に合う問題がありません');return;}
+  }else{
+    var sh=shArr(p);
+    var cnt=parseInt(ge('FC').value,10);if(isNaN(cnt))cnt=3;
+    qs=cnt>0?sh.slice(0,cnt):sh;
+  }
+  SE={qs:qs,idx:0,res:[],done:false,sel:null,subs:null};
   var cs=document.querySelectorAll('.wc');for(var i=0;i<cs.length;i++)cs[i].classList.remove('on');
   shP(1);rnQ();
 }
