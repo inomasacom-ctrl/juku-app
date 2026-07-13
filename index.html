@@ -134,6 +134,7 @@ select:disabled{opacity:.4}
             <option value="下">4年下</option>
             <option value="5上">5年上</option>
             <option value="5下">5年下</option>
+            <option value="特訓">特訓（記述・選択肢）</option>
           </select>
         </div>
       </div>
@@ -243,9 +244,9 @@ var WK=[
   {s:'算数',t:'計算精度・時間',p:64,c:'#85B7EB',a:'ケアレスで得点ロス',fs:'算数',fsr:'',fk:null},
   {s:'理科',t:'応用問題',p:58,c:'#97C459',a:'基礎は安定',fs:'理科',fsr:'',fk:null}
 ];
-var DT={'基本':{'choice':60,'text':90},'標準':{'choice':90,'text':150},'S入門':{'choice':120,'text':210},'S中堅':{'choice':150,'text':270},'S上位':{'choice':180,'text':360},'S最難':{'choice':240,'text':480}};
+var DT={'基本':{'choice':60,'text':90},'標準':{'choice':90,'text':150},'S入門':{'choice':120,'text':210},'S中堅':{'choice':150,'text':270},'S上位':{'choice':180,'text':360},'S最難':{'choice':240,'text':480},'特訓':{'choice':300,'text':600}};
 var STAG={'算数':'tg-s','国語':'tg-k','社会':'tg-sh','理科':'tg-r'};
-var DTAG={'基本':'tg-0','標準':'tg-1','S入門':'tg-2','S中堅':'tg-3','S上位':'tg-4','S最難':'tg-4'};
+var DTAG={'基本':'tg-0','標準':'tg-1','S入門':'tg-2','S中堅':'tg-3','S上位':'tg-4','S最難':'tg-4','特訓':'tg-3'};
 var SM={算数:'SS0',国語:'SS1',社会:'SS2',理科:'SS3'};
 var ST2={total:0,correct:0,sub:{算数:{t:0,c:0},国語:{t:0,c:0},社会:{t:0,c:0},理科:{t:0,c:0}}};
 var HS=[];
@@ -366,6 +367,7 @@ function pW(i){
   if(w.fk!=null){ge('FK').value=String(w.fk);bU();}upMC();
 }
 // 総合回（第5・10・15・20回）→ その範囲の構成回
+var TRAINMAP={1:'記述練習',2:'選択肢の消去'};
 var SOGO={5:[1,2,3,4],10:[6,7,8,9],15:[11,12,13,14],20:[16,17,18,19]};
 // 選んだ回kに対し、問題の回qkが該当するか（総合回ならその構成回も含める）
 function kaiMatch(qk,k){
@@ -391,12 +393,13 @@ function pl(){
 }
 function bK(){
   var s=ge('FS').value,sr=ge('FSER').value,sel=ge('FK'),cur=sel.value;
-  sel.innerHTML='<option value="">全回</option>';
+  var tr=(sr==='特訓');
+  sel.innerHTML='<option value="">'+(tr?'すべて':'全回')+'</option>';
   var seen={};
   for(var i=0;i<AQ.length;i++){var q=AQ[i];if(s&&q.subject!==s)continue;if(sr&&q.series!==sr)continue;seen[q.kai]=1;}
-  for(var sg in SOGO){var cc=SOGO[sg];for(var ci=0;ci<cc.length;ci++){if(seen[cc[ci]]){seen[+sg]=1;break;}}}
+  if(!tr){for(var sg in SOGO){var cc=SOGO[sg];for(var ci=0;ci<cc.length;ci++){if(seen[cc[ci]]){seen[+sg]=1;break;}}}}
   var ks=[];for(var k in seen)ks.push(+k);ks.sort(function(a,b){return a-b;});
-  for(var i=0;i<ks.length;i++){var o=document.createElement('option');o.value=String(ks[i]);o.textContent='第'+ks[i]+'回';sel.appendChild(o);}
+  for(var i=0;i<ks.length;i++){var o=document.createElement('option');o.value=String(ks[i]);o.textContent=tr?(TRAINMAP[ks[i]]||('区分'+ks[i])):('第'+ks[i]+'回');sel.appendChild(o);}
   if(cur){var ex=sel.querySelector('option[value="'+cur+'"]');if(ex)sel.value=cur;}
   bU();
 }
@@ -504,7 +507,7 @@ function rnQ(){
   stT(sec);
   ge('QM').innerHTML='<span class="tg '+(STAG[q.subject]||'')+'">'+q.subject+'</span>'
     +'<span class="tg '+(DTAG[q.diff]||'')+'">'+q.diff+'</span>'
-    +'<span class="tg" style="background:var(--bg);color:var(--mt);font-size:10px">第'+q.kai+'回</span>';
+    +'<span class="tg" style="background:var(--bg);color:var(--mt);font-size:10px">'+(q.series==='特訓'?(TRAINMAP[q.kai]||''):('第'+q.kai+'回'))+'</span>';
   ge('QX').textContent=q.question;
   ge('HA').innerHTML='';ge('RA').innerHTML='';
   var qi=ge('QI');
