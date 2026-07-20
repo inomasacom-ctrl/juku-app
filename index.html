@@ -367,7 +367,7 @@ function pW(i){
   if(w.fk!=null){ge('FK').value=String(w.fk);bU();}upMC();
 }
 // 総合回（第5・10・15・20回）→ その範囲の構成回
-var TRAINMAP={1:'記述練習',2:'選択肢の消去',3:'2択決着',4:'漢字・語句'};
+var TRAINMAP={1:'記述練習',2:'選択肢の消去',3:'2択決着',4:'漢字・語句',5:'思考力（規則性）'};
 var SOGO={5:[1,2,3,4],10:[6,7,8,9],15:[11,12,13,14],20:[16,17,18,19]};
 // 選んだ回kに対し、問題の回qkが該当するか（総合回ならその構成回も含める）
 function kaiMatch(qk,k){
@@ -494,7 +494,7 @@ function trC(c){
   if(c.length>2&&(c[0]==='ア'||c[0]==='イ'||c[0]==='ウ'||c[0]==='エ')){var c2=c.charCodeAt(1);if(c2===46||c2===65294)return c.slice(2).trim();}return c;
 }
 function rnQ(){
-  SE.done=false;SE.sel=null;SE.subs=null;
+  SE.done=false;SE.sel=null;SE.subs=null;SE.hi=0;
   var q=SE.qs[SE.idx];
   ge('PP').textContent=(SE.idx+1)+'/'+SE.qs.length+'問';
   var dh='';
@@ -536,7 +536,21 @@ function rnQ(){
     }
   }
 }
-function shH(){var q=SE.qs[SE.idx];if(q)ge('HA').innerHTML='<div class="htbox">&#128161; '+q.hint+'</div>';}
+function shH(){
+  var q=SE.qs[SE.idx];if(!q)return;
+  var hs=(q.hints&&q.hints.length)?q.hints:(q.hint?[q.hint]:[]);
+  if(!hs.length)return;
+  if(SE.hi===undefined||SE.hi===null)SE.hi=0;
+  SE.hi++;if(SE.hi>hs.length)SE.hi=hs.length;
+  var lbl=['&#128161; ヒント①（とっかかり）','&#128736;&#65039; ヒント②（方針）','&#127919; ヒント③（進め方）','&#128161; ヒント④','&#128161; ヒント⑤'];
+  var html='';
+  for(var i=0;i<SE.hi;i++)
+    html+='<div class="htbox" style="margin-top:'+(i?6:10)+'px">'+(hs.length>1?(lbl[i]||('&#128161; ヒント'+(i+1)))+'：<br>':'&#128161; ')+hs[i]+'</div>';
+  if(SE.hi<hs.length)
+    html+='<button class="htbtn" id="MHT" style="margin-top:6px">もう少しヒント（あと'+(hs.length-SE.hi)+'）</button>';
+  ge('HA').innerHTML=html;
+  var mb=ge('MHT');if(mb)mb.addEventListener('click',function(){shH();});
+}
 function nm(s){
   var r='';for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);if(c===32||c===12288||c===10||c===13)continue;r+=s[i].toLowerCase();}return r;
 }
