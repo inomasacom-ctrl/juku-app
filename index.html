@@ -185,6 +185,17 @@ select:disabled{opacity:.4}
         <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;padding:4px 2px">
           <input type="checkbox" id="FGM" style="width:18px;height:18px"> 組み分け対策（科目×難易度ごとに10問ずつバランス出題）
         </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;padding:4px 2px">
+          <input type="checkbox" id="FKJ" style="width:18px;height:18px"> 漢字ランダム（漢字・ことばだけをランダム順に出題）
+        </label>
+        <div id="KJOPT" style="display:none;padding:4px 2px 4px 26px">
+          <label style="font-size:13px;color:var(--mt)">出題数：
+            <select id="FKJN" style="font-size:13px;padding:2px 6px">
+              <option value="10">10問</option><option value="20" selected>20問</option>
+              <option value="30">30問</option><option value="50">50問</option><option value="0">すべて</option>
+            </select>
+          </label>
+        </div>
       </div>
       <div class="mc" id="MC">---</div>
       <button class="stbtn" id="STBTN">出題開始 &#9654;</button>
@@ -294,7 +305,7 @@ document.addEventListener('DOMContentLoaded',function(){
   ge('CKBTN').addEventListener('click',function(){chkA();});
   ge('HTBTN').addEventListener('click',function(){shH();});
   ge('RSTBTN').addEventListener('click',function(){rstA();});
-  var fi=['FS','FSER','FK','FU','FD','FRV','FEW','FTH','FGM'];
+  var fi=['FS','FSER','FK','FU','FD','FRV','FEW','FTH','FGM','FKJ','FKJN'];
   for(var i=0;i<fi.length;i++){
     (function(id){
       var el=ge(id);if(!el)return;
@@ -368,6 +379,8 @@ function pW(i){
 }
 // 総合回（第5・10・15・20回）→ その範囲の構成回
 var TRAINMAP={1:'記述練習',2:'選択肢の消去',3:'2択決着',4:'漢字・語句',5:'思考力（規則性）',6:'思考力（規則性・発展）'};
+var MOSHIMAP={7:'第5回対策 算数'};
+function lblKai(sr,k){if(sr==='特訓')return TRAINMAP[k]||('区分'+k);if(sr==='模試')return MOSHIMAP[k]||('模試'+k);return '第'+k+'回';}
 var SOGO={5:[1,2,3,4],10:[6,7,8,9],15:[11,12,13,14],20:[16,17,18,19]};
 // 選んだ回kに対し、問題の回qkが該当するか（総合回ならその構成回も含める）
 function kaiMatch(qk,k){
@@ -393,13 +406,13 @@ function pl(){
 }
 function bK(){
   var s=ge('FS').value,sr=ge('FSER').value,sel=ge('FK'),cur=sel.value;
-  var tr=(sr==='特訓');
+  var tr=(sr==='特訓'||sr==='模試');
   sel.innerHTML='<option value="">'+(tr?'すべて':'全回')+'</option>';
   var seen={};
   for(var i=0;i<AQ.length;i++){var q=AQ[i];if(s&&q.subject!==s)continue;if(sr&&q.series!==sr)continue;seen[q.kai]=1;}
   if(!tr){for(var sg in SOGO){var cc=SOGO[sg];for(var ci=0;ci<cc.length;ci++){if(seen[cc[ci]]){seen[+sg]=1;break;}}}}
   var ks=[];for(var k in seen)ks.push(+k);ks.sort(function(a,b){return a-b;});
-  for(var i=0;i<ks.length;i++){var o=document.createElement('option');o.value=String(ks[i]);o.textContent=tr?(TRAINMAP[ks[i]]||('区分'+ks[i])):('第'+ks[i]+'回');sel.appendChild(o);}
+  for(var i=0;i<ks.length;i++){var o=document.createElement('option');o.value=String(ks[i]);o.textContent=lblKai(sr,ks[i]);sel.appendChild(o);}
   if(cur){var ex=sel.querySelector('option[value="'+cur+'"]');if(ex)sel.value=cur;}
   bU();
 }
@@ -414,7 +427,17 @@ function bU(){
 }
 function upMC(){
   var rev=ge('FRV')&&ge('FRV').checked,few=ge('FEW')&&ge('FEW').checked,gm=ge('FGM')&&ge('FGM').checked;
+  var kj=ge('FKJ')&&ge('FKJ').checked;
   var p=pl(),el=ge('MC');
+  var kopt=ge('KJOPT');if(kopt)kopt.style.display=kj?'block':'none';
+  if(kj){
+    var kp=kjPool();
+    var n=parseInt(ge('FKJN')?ge('FKJN').value:'20',10);
+    var out=(isNaN(n)||n<=0)?kp.length:Math.min(n,kp.length);
+    el.textContent='漢字ランダム 出題予定：'+out+'問（該当'+kp.length+'問からランダム順）';
+    el.style.color=out===0?'var(--rd)':'var(--mt)';
+    return;
+  }
   if(gm){
     // 科目×難易度ごとに min(10, 該当数) を合計
     var cnt=0,map={};
@@ -426,6 +449,24 @@ function upMC(){
   }
   var lbl=few?('一度間違えた（連続'+TH+'回正解で卒業）該当：'):(rev?'復習（×だけ）該当：':'該当：');
   el.textContent=lbl+p.length+'問';el.style.color=p.length===0?'var(--rd)':'var(--mt)';
+}
+function isKJ(q){
+  if(q.subject!=='国語')return false;
+  var u=q.unit||'';
+  return u.indexOf('漢字')>=0||u.indexOf('ことわざ')>=0||u.indexOf('慣用')>=0||u.indexOf('熟語')>=0
+    ||u.indexOf('対義語')>=0||u.indexOf('類義語')>=0||u.indexOf('部首')>=0||u.indexOf('送りがな')>=0
+    ||u.indexOf('特別な読み')>=0||u.indexOf('敬語')>=0;
+}
+function kjPool(){
+  var p=pl(),out=[];
+  for(var i=0;i<p.length;i++)if(isKJ(p[i]))out.push(p[i]);
+  return out;
+}
+function kjSample(){
+  var pool=shArr(kjPool());
+  var n=parseInt(ge('FKJN')?ge('FKJN').value:'20',10);
+  if(isNaN(n)||n<=0)return pool;
+  return pool.slice(0,n);
 }
 function shArr(a){var s=a.slice();for(var i=s.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=s[i];s[i]=s[j];s[j]=t;}return s;}
 // 組み分け対策：科目×難易度ごとに最大10問、回がかたよらないよう回ごとに順番に取る
@@ -461,6 +502,14 @@ function gmSample(pool){
 }
 function stS(){
   var gm=ge('FGM')&&ge('FGM').checked;
+  var kjm=ge('FKJ')&&ge('FKJ').checked;
+  if(kjm){
+    var kqs=kjSample();
+    if(!kqs.length){alert('漢字・ことばの問題が見つかりません（科目「国語」で回を選び直してください）');return;}
+    SE={qs:kqs,idx:0,res:[],done:false,sel:null,subs:null,hi:0};
+    var cs0=document.querySelectorAll('.wc');for(var i0=0;i0<cs0.length;i0++)cs0[i0].classList.remove('on');
+    shP(1);rnQ();return;
+  }
   var p=pl();if(!p.length){alert('条件に合う問題がありません');return;}
   var qs;
   if(gm){
@@ -507,7 +556,7 @@ function rnQ(){
   stT(sec);
   ge('QM').innerHTML='<span class="tg '+(STAG[q.subject]||'')+'">'+q.subject+'</span>'
     +'<span class="tg '+(DTAG[q.diff]||'')+'">'+q.diff+'</span>'
-    +'<span class="tg" style="background:var(--bg);color:var(--mt);font-size:10px">'+(q.series==='特訓'?(TRAINMAP[q.kai]||''):('第'+q.kai+'回'))+'</span>';
+    +'<span class="tg" style="background:var(--bg);color:var(--mt);font-size:10px">'+lblKai(q.series,q.kai)+'</span>';
   ge('QX').textContent=q.question;
   ge('HA').innerHTML='';ge('RA').innerHTML='';
   var qi=ge('QI');
