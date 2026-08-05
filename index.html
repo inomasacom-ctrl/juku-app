@@ -189,6 +189,9 @@ select:disabled{opacity:.4}
           <input type="checkbox" id="FKJ" style="width:18px;height:18px"> 漢字ランダム（漢字・ことばだけをランダム順に出題）
         </label>
         <div id="KJOPT" style="display:none;padding:4px 2px 4px 26px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:6px">
+            <input type="checkbox" id="FKJW" style="width:16px;height:16px" checked> 書き取り練習（紙に書く→こたえを大きく表示）
+          </label>
           <label style="font-size:13px;color:var(--mt)">出題数：
             <select id="FKJN" style="font-size:13px;padding:2px 6px">
               <option value="10">10問</option><option value="20" selected>20問</option>
@@ -220,6 +223,30 @@ select:disabled{opacity:.4}
       <div style="font-size:17px;font-weight:600;margin-bottom:16px" id="RM">-</div>
       <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:20px" id="RB"></div>
       <button class="rpb" id="HBTN">ホームへ戻る</button>
+    </div>
+  </div>
+  <div class="pg" id="PG5">
+    <div class="card" style="text-align:center;padding:18px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <span style="font-size:12px;color:var(--mt)" id="KJPOS">1 / 20</span>
+        <span class="tg" id="KJTAG" style="font-size:11px"></span>
+        <button id="KJEND" style="font-size:12px;padding:4px 10px;border:1px solid var(--bd);background:var(--bg);color:var(--mt);border-radius:6px;cursor:pointer">終了</button>
+      </div>
+      <div id="KJQ" style="font-size:19px;line-height:1.9;font-weight:600;margin:10px 4px 18px;text-align:left"></div>
+      <div id="KJHINT" style="font-size:13px;color:var(--mt);margin-bottom:14px;min-height:0"></div>
+      <div id="KJANS" style="display:none;margin:10px 0 16px">
+        <div style="font-size:12px;color:var(--mt);margin-bottom:6px">こたえ</div>
+        <div id="KJBIG" style="font-size:64px;line-height:1.35;font-weight:800;letter-spacing:.10em;color:var(--ac);word-break:break-all;padding:8px 4px"></div>
+        <div id="KJNOTE" style="font-size:13px;color:var(--mt);text-align:left;margin-top:10px;white-space:pre-wrap"></div>
+      </div>
+      <button id="KJSHOW" class="ckbtn" style="width:100%;margin-bottom:10px">こたえを見る</button>
+      <div id="KJJUDGE" style="display:none;gap:10px;margin-bottom:6px">
+        <button id="KJNG" style="flex:1;padding:12px;border:1px solid var(--rd);background:var(--bg);color:var(--rd);border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">まちがえた</button>
+        <button id="KJOK" style="flex:1;padding:12px;border:none;background:var(--gr);color:#fff;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">書けた</button>
+      </div>
+    </div>
+    <div class="card" style="padding:12px 14px;font-size:12px;color:var(--mt);line-height:1.7">
+      紙に書いてから「こたえを見る」を押し、字の形・とめ・はね・送りがなまで見くらべましょう。
     </div>
   </div>
   <div class="pg" id="PG3"><div class="lbl">学習履歴</div><div id="HL"></div></div>
@@ -304,8 +331,12 @@ document.addEventListener('DOMContentLoaded',function(){
   ge('STBTN').addEventListener('click',function(){stS();});
   ge('CKBTN').addEventListener('click',function(){chkA();});
   ge('HTBTN').addEventListener('click',function(){shH();});
+  ge('KJSHOW').addEventListener('click',function(){kjShow();});
+  ge('KJOK').addEventListener('click',function(){kjNext(true);});
+  ge('KJNG').addEventListener('click',function(){kjNext(false);});
+  ge('KJEND').addEventListener('click',function(){if(KJ.ok+KJ.ng>0){kjFinish();}else{shP(0);}});
   ge('RSTBTN').addEventListener('click',function(){rstA();});
-  var fi=['FS','FSER','FK','FU','FD','FRV','FEW','FTH','FGM','FKJ','FKJN'];
+  var fi=['FS','FSER','FK','FU','FD','FRV','FEW','FTH','FGM','FKJ','FKJN','FKJW'];
   for(var i=0;i<fi.length;i++){
     (function(id){
       var el=ge(id);if(!el)return;
@@ -345,8 +376,8 @@ function gH(){stpT();shP(0);upST();}
 function gR(){shP(3);rnH();}
 function gS(){shP(4);upDI();}
 function shP(n){
-  for(var i=0;i<5;i++)ge('PG'+i).classList.toggle('on',i===n);
-  ge('NB0').classList.toggle('on',n<3);ge('NB1').classList.toggle('on',n===3);ge('NB2').classList.toggle('on',n===4);
+  for(var i=0;i<6;i++){var e=ge('PG'+i);if(e)e.classList.toggle('on',i===n);}
+  ge('NB0').classList.toggle('on',n<3||n===5);ge('NB1').classList.toggle('on',n===3);ge('NB2').classList.toggle('on',n===4);
   try{ge('MAIN').scrollTop=0;}catch(e){}
 }
 function onF(id){if(id==='FS'||id==='FSER')bK();else if(id==='FK')bU();else if(id==='FTH'){var v=parseInt(ge('FTH').value,10);if(!isNaN(v)&&v>=1){TH=v;svTH();}upMC();}else upMC();}
@@ -378,7 +409,7 @@ function pW(i){
   if(w.fk!=null){ge('FK').value=String(w.fk);bU();}upMC();
 }
 // 総合回（第5・10・15・20回）→ その範囲の構成回
-var TRAINMAP={1:'記述練習',2:'選択肢の消去',3:'2択決着',4:'漢字・語句',5:'思考力（規則性）',6:'思考力（規則性・発展）'};
+var TRAINMAP={1:'記述練習',2:'選択肢の消去',3:'2択決着',4:'漢字・語句',5:'思考力（規則性）',6:'思考力（規則性・発展）',7:'思考力（平面図形）',8:'思考力（数の性質・条件整理）'};
 var MOSHIMAP={7:'①算数（200点）',8:'①国語（150点）',9:'①理科（100点）',10:'①社会（100点）',11:'②算数（200点）',12:'②国語（150点）',13:'②理科（100点）',14:'②社会（100点）'};
 function lblKai(sr,k){if(sr==='特訓')return TRAINMAP[k]||('区分'+k);if(sr==='模試')return MOSHIMAP[k]||('模試'+k);return '第'+k+'回';}
 var SOGO={5:[1,2,3,4],10:[6,7,8,9],15:[11,12,13,14],20:[16,17,18,19]};
@@ -450,6 +481,71 @@ function upMC(){
   var lbl=few?('一度間違えた（連続'+TH+'回正解で卒業）該当：'):(rev?'復習（×だけ）該当：':'該当：');
   el.textContent=lbl+p.length+'問';el.style.color=p.length===0?'var(--rd)':'var(--mt)';
 }
+var KJ={qs:[],i:0,ok:0,ng:0,shown:false,wrong:[]};
+function kjStart(qs){
+  KJ={qs:qs,i:0,ok:0,ng:0,shown:false,wrong:[]};
+  shP(5);kjRender();
+}
+function kjRender(){
+  var q=KJ.qs[KJ.i];if(!q){kjFinish();return;}
+  KJ.shown=false;
+  ge('KJPOS').textContent=(KJ.i+1)+' / '+KJ.qs.length;
+  var tg=ge('KJTAG');
+  tg.textContent=lblKai(q.series,q.kai)+'・'+(q.unit||'');
+  tg.className='tg '+(DTAG[q.diff]||'tg-1');
+  ge('KJQ').textContent=q.question;
+  var hs=(q.hints&&q.hints.length)?q.hints[0]:(q.hint||'');
+  ge('KJHINT').textContent=hs?('ヒント：'+hs):'';
+  ge('KJBIG').textContent=q.answer;
+  var note=[];
+  if(q.explanation)note.push(q.explanation);
+  if(q.point)note.push('▶ '+q.point);
+  ge('KJNOTE').textContent=note.join('\n\n');
+  ge('KJANS').style.display='none';
+  ge('KJSHOW').style.display='block';
+  ge('KJJUDGE').style.display='none';
+  try{ge('MAIN').scrollTop=0;}catch(e){}
+}
+function kjShow(){
+  KJ.shown=true;
+  ge('KJANS').style.display='block';
+  ge('KJSHOW').style.display='none';
+  ge('KJJUDGE').style.display='flex';
+}
+function kjNext(ok){
+  var q=KJ.qs[KJ.i];
+  if(ok){KJ.ok++;}else{KJ.ng++;if(q)KJ.wrong.push(q);}
+  if(q){
+    try{
+      var sub=q.subject,id=q.id;
+      ST2.total++;if(!ST2.sub[sub])ST2.sub[sub]={t:0,c:0};ST2.sub[sub].t++;
+      if(ok){
+        ST2.correct++;ST2.sub[sub].c++;delete WR[id];
+        if(id in EW)EW[id]=EW[id]+1;
+      }else{ WR[id]=1;EW[id]=0; }
+      svS();svW();svEW();upST();
+    }catch(e){}
+  }
+  KJ.i++;
+  if(KJ.i>=KJ.qs.length)kjFinish();else kjRender();
+}
+function kjFinish(){
+  var n=KJ.ok+KJ.ng;
+  ge('RS').textContent=KJ.ok;
+  ge('RL').textContent='／'+n+'問 書けました';
+  var r=n>0?Math.round(KJ.ok/n*100):0;
+  ge('RM').textContent=r>=90?'すばらしい！ほぼ完ぺきです':r>=70?'よく書けています。まちがえた字をもう一度':r>=50?'あと一息。書けなかった字を練習しよう':'くり返し練習しましょう';
+  var rb=ge('RB');rb.innerHTML='';
+  if(KJ.wrong.length){
+    var b=document.createElement('button');
+    b.className='rpb';b.style.marginBottom='10px';
+    b.textContent='まちがえた'+KJ.wrong.length+'問をもう一度';
+    b.addEventListener('click',function(){kjStart(shArr(KJ.wrong.slice()));});
+    rb.appendChild(b);
+  }
+  try{HS.push({d:new Date().toISOString(),n:n,c:KJ.ok,s:'漢字書き取り'});svH();}catch(e){}
+  shP(2);
+}
 function isKJ(q){
   if(q.subject!=='国語')return false;
   var u=q.unit||'';
@@ -506,6 +602,8 @@ function stS(){
   if(kjm){
     var kqs=kjSample();
     if(!kqs.length){alert('漢字・ことばの問題が見つかりません（科目「国語」で回を選び直してください）');return;}
+    var wmode=ge('FKJW')&&ge('FKJW').checked;
+    if(wmode){kjStart(kqs);return;}
     SE={qs:kqs,idx:0,res:[],done:false,sel:null,subs:null,hi:0};
     var cs0=document.querySelectorAll('.wc');for(var i0=0;i0<cs0.length;i0++)cs0[i0].classList.remove('on');
     shP(1);rnQ();return;
