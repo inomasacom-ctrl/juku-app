@@ -134,7 +134,8 @@ select:disabled{opacity:.4}
             <option value="下">4年下</option>
             <option value="5上">5年上</option>
             <option value="5下">5年下</option>
-            <option value="特訓">特訓（記述・選択肢）</option>
+            <option value="特訓">特訓（記述・選択肢・思考力）</option>
+            <option value="模試">模試（組分け対策）</option>
           </select>
         </div>
       </div>
@@ -614,7 +615,8 @@ function stS(){
     qs=gmSample(p);
     if(!qs.length){alert('条件に合う問題がありません');return;}
   }else{
-    var sh=shArr(p);
+    // 模試は本番と同じ順（大問1から）で出す。それ以外はシャッフル
+    var sh=(ge('FSER').value==='模試')?p.slice():shArr(p);
     var cnt=parseInt(ge('FC').value,10);if(isNaN(cnt))cnt=3;
     qs=cnt>0?sh.slice(0,cnt):sh;
   }
