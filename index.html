@@ -235,19 +235,44 @@ select:disabled{opacity:.4}
       </div>
       <div id="KJQ" style="font-size:19px;line-height:1.9;font-weight:600;margin:10px 4px 18px;text-align:left"></div>
       <div id="KJHINT" style="font-size:13px;color:var(--mt);margin-bottom:14px;min-height:0"></div>
+
+      <div id="KJPAD" style="margin:0 0 12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:12px;color:var(--mt)">ここに指かペンで書く</span>
+          <span style="display:flex;gap:6px">
+            <button id="KJUNDO" style="font-size:12px;padding:5px 10px;border:1px solid var(--bd);background:var(--bg);color:var(--mt);border-radius:6px;cursor:pointer">1画もどす</button>
+            <button id="KJCLR" style="font-size:12px;padding:5px 10px;border:1px solid var(--bd);background:var(--bg);color:var(--mt);border-radius:6px;cursor:pointer">ぜんぶ消す</button>
+          </span>
+        </div>
+        <div id="KJCVWRAP" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <span style="font-size:11px;color:var(--mt)">マス数</span>
+          <span style="display:flex;gap:4px" id="KJBOXN">
+            <button data-n="1" style="font-size:12px;padding:4px 9px;border:1px solid var(--bd);background:var(--bg);border-radius:6px;cursor:pointer">1</button>
+            <button data-n="2" style="font-size:12px;padding:4px 9px;border:1px solid var(--bd);background:var(--bg);border-radius:6px;cursor:pointer">2</button>
+            <button data-n="3" style="font-size:12px;padding:4px 9px;border:1px solid var(--bd);background:var(--bg);border-radius:6px;cursor:pointer">3</button>
+            <button data-n="4" style="font-size:12px;padding:4px 9px;border:1px solid var(--bd);background:var(--bg);border-radius:6px;cursor:pointer">4</button>
+          </span>
+        </div>
+      </div>
+
       <div id="KJANS" style="display:none;margin:10px 0 16px">
         <div style="font-size:12px;color:var(--mt);margin-bottom:6px">こたえ</div>
         <div id="KJBIG" style="font-size:64px;line-height:1.35;font-weight:800;letter-spacing:.10em;color:var(--ac);word-break:break-all;padding:8px 4px"></div>
+        <div id="KJMINE" style="display:none;margin-top:4px">
+          <div style="font-size:12px;color:var(--mt);margin-bottom:6px">じぶんが書いた字</div>
+          <div id="KJMINEWRAP" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"></div>
+        </div>
         <div id="KJNOTE" style="font-size:13px;color:var(--mt);text-align:left;margin-top:10px;white-space:pre-wrap"></div>
       </div>
       <button id="KJSHOW" class="ckbtn" style="width:100%;margin-bottom:10px">こたえを見る</button>
-      <div id="KJJUDGE" style="display:none;gap:10px;margin-bottom:6px">
+      <div id="KJJUDGE" style="display:none;gap:10px;margin-bottom:6px;flex-wrap:nowrap">
         <button id="KJNG" style="flex:1;padding:12px;border:1px solid var(--rd);background:var(--bg);color:var(--rd);border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">まちがえた</button>
         <button id="KJOK" style="flex:1;padding:12px;border:none;background:var(--gr);color:#fff;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">書けた</button>
       </div>
     </div>
     <div class="card" style="padding:12px 14px;font-size:12px;color:var(--mt);line-height:1.7">
-      紙に書いてから「こたえを見る」を押し、字の形・とめ・はね・送りがなまで見くらべましょう。
+      マスに指かペンで書いてから「こたえを見る」を押し、字の形・とめ・はね・送りがなまで見くらべましょう。紙に書きたいときは「ぜんぶ消す」の右のマス数を1にして、画面は使わなくてもかまいません。
     </div>
   </div>
   <div class="pg" id="PG3"><div class="lbl">学習履歴</div><div id="HL"></div></div>
@@ -333,6 +358,19 @@ document.addEventListener('DOMContentLoaded',function(){
   ge('CKBTN').addEventListener('click',function(){chkA();});
   ge('HTBTN').addEventListener('click',function(){shH();});
   ge('KJSHOW').addEventListener('click',function(){kjShow();});
+  ge('KJCLR').addEventListener('click',function(){padClear();});
+  ge('KJUNDO').addEventListener('click',function(){padUndo();});
+  (function(){
+    var bs=ge('KJBOXN').getElementsByTagName('button');
+    for(var i=0;i<bs.length;i++){
+      bs[i].addEventListener('click',function(){
+        padSetN(parseInt(this.getAttribute('data-n'),10));
+      });
+    }
+  })();
+  window.addEventListener('resize',function(){
+    if(ge('PG5').classList.contains('on')&&!KJ.shown)padSetN(PAD.n);
+  });
   ge('KJOK').addEventListener('click',function(){kjNext(true);});
   ge('KJNG').addEventListener('click',function(){kjNext(false);});
   ge('KJEND').addEventListener('click',function(){if(KJ.ok+KJ.ng>0){kjFinish();}else{shP(0);}});
@@ -482,6 +520,128 @@ function upMC(){
   var lbl=few?('一度間違えた（連続'+TH+'回正解で卒業）該当：'):(rev?'復習（×だけ）該当：':'該当：');
   el.textContent=lbl+p.length+'問';el.style.color=p.length===0?'var(--rd)':'var(--mt)';
 }
+
+/* ===== 手書きパッド（指・ペン・マウス対応） ===== */
+var PAD={boxes:[],n:2,pen:null};
+function padCount(ans){
+  var a=(ans||'').replace(/[\s\u3000]/g,'');
+  var n=a.length; if(n<1)n=1; if(n>4)n=4; return n;
+}
+function padBuild(n,wrapId){
+  PAD.n=n; PAD.boxes=[];
+  var wrap=ge(wrapId); if(!wrap)return;
+  wrap.innerHTML='';
+  /* 画面幅に合わせてマスの大きさを決める */
+  var avail=Math.min(wrap.clientWidth||320, 520);
+  var size=Math.floor((avail-(n-1)*8)/n);
+  if(size>140)size=140; if(size<64)size=64;
+  var dpr=window.devicePixelRatio||1;
+  for(var i=0;i<n;i++){
+    var cv=document.createElement('canvas');
+    cv.width=size*dpr; cv.height=size*dpr;
+    cv.style.width=size+'px'; cv.style.height=size+'px';
+    cv.style.border='1px solid #bbb'; cv.style.borderRadius='6px';
+    cv.style.background='#fff'; cv.style.touchAction='none'; cv.style.cursor='crosshair';
+    var ctx=cv.getContext('2d');
+    ctx.scale(dpr,dpr);
+    var box={cv:cv,ctx:ctx,size:size,strokes:[],cur:null};
+    PAD.boxes.push(box);
+    padGrid(box);
+    padBind(box);
+    wrap.appendChild(cv);
+  }
+}
+function padGrid(b){
+  var c=b.ctx,s=b.size;
+  c.clearRect(0,0,s,s);
+  c.save();
+  c.strokeStyle='#e0e0e0'; c.lineWidth=1;
+  c.setLineDash([4,4]);
+  c.beginPath(); c.moveTo(s/2,0); c.lineTo(s/2,s);
+  c.moveTo(0,s/2); c.lineTo(s,s/2); c.stroke();
+  c.restore();
+}
+function padRedraw(b){
+  padGrid(b);
+  var c=b.ctx;
+  c.save();
+  c.strokeStyle='#111'; c.lineWidth=Math.max(3,b.size/22);
+  c.lineCap='round'; c.lineJoin='round';
+  for(var i=0;i<b.strokes.length;i++){
+    var st=b.strokes[i]; if(st.length<1)continue;
+    c.beginPath(); c.moveTo(st[0].x,st[0].y);
+    if(st.length===1){ c.lineTo(st[0].x+0.1,st[0].y+0.1); }
+    else{ for(var j=1;j<st.length;j++)c.lineTo(st[j].x,st[j].y); }
+    c.stroke();
+  }
+  c.restore();
+}
+function padPos(b,e){
+  var r=b.cv.getBoundingClientRect();
+  var t=(e.touches&&e.touches[0])?e.touches[0]:e;
+  return {x:(t.clientX-r.left),y:(t.clientY-r.top)};
+}
+function padBind(b){
+  function down(e){
+    e.preventDefault();
+    b.cur=[padPos(b,e)]; b.strokes.push(b.cur); PAD.pen=b; padRedraw(b);
+  }
+  function move(e){
+    if(PAD.pen!==b||!b.cur)return;
+    e.preventDefault();
+    b.cur.push(padPos(b,e)); padRedraw(b);
+  }
+  function up(e){ if(PAD.pen===b){b.cur=null;PAD.pen=null;} }
+  b.cv.addEventListener('pointerdown',down);
+  b.cv.addEventListener('pointermove',move);
+  b.cv.addEventListener('pointerup',up);
+  b.cv.addEventListener('pointercancel',up);
+  b.cv.addEventListener('pointerleave',up);
+  /* 古い端末むけ */
+  b.cv.addEventListener('touchstart',down,{passive:false});
+  b.cv.addEventListener('touchmove',move,{passive:false});
+  b.cv.addEventListener('touchend',up);
+  b.cv.addEventListener('mousedown',down);
+  b.cv.addEventListener('mousemove',move);
+  b.cv.addEventListener('mouseup',up);
+}
+function padClear(){ for(var i=0;i<PAD.boxes.length;i++){PAD.boxes[i].strokes=[];padGrid(PAD.boxes[i]);} }
+function padUndo(){
+  /* 最後に書いた画を1つ取り消す（右のマスから探す） */
+  for(var i=PAD.boxes.length-1;i>=0;i--){
+    var b=PAD.boxes[i];
+    if(b.strokes.length){ b.strokes.pop(); padRedraw(b); return; }
+  }
+}
+function padHasInk(){
+  for(var i=0;i<PAD.boxes.length;i++) if(PAD.boxes[i].strokes.length) return true;
+  return false;
+}
+function padSnapshot(wrapId){
+  /* いま書いた字を画像にして、こたえの下に並べる */
+  var w=ge(wrapId); if(!w)return; w.innerHTML='';
+  for(var i=0;i<PAD.boxes.length;i++){
+    var b=PAD.boxes[i];
+    var im=document.createElement('img');
+    try{ im.src=b.cv.toDataURL(); }catch(e){ continue; }
+    var sz=Math.round(b.size*0.62);
+    im.style.width=sz+'px'; im.style.height=sz+'px';
+    im.style.border='1px solid #ddd'; im.style.borderRadius='5px'; im.style.background='#fff';
+    w.appendChild(im);
+  }
+}
+function padSetN(n){
+  padBuild(n,'KJCVWRAP');
+  var bs=ge('KJBOXN').getElementsByTagName('button');
+  for(var i=0;i<bs.length;i++){
+    var on=(parseInt(bs[i].getAttribute('data-n'),10)===n);
+    bs[i].style.background=on?'#33518c':'#fff';
+    bs[i].style.color=on?'#fff':'#555';
+    bs[i].style.borderColor=on?'#33518c':'#ccc';
+    bs[i].style.fontWeight=on?'700':'400';
+  }
+}
+
 var KJ={qs:[],i:0,ok:0,ng:0,shown:false,wrong:[]};
 function kjStart(qs){
   KJ={qs:qs,i:0,ok:0,ng:0,shown:false,wrong:[]};
@@ -505,10 +665,15 @@ function kjRender(){
   ge('KJANS').style.display='none';
   ge('KJSHOW').style.display='block';
   ge('KJJUDGE').style.display='none';
+  ge('KJPAD').style.display='block';
+  ge('KJMINE').style.display='none';
+  padSetN(padCount(q.answer));
   try{ge('MAIN').scrollTop=0;}catch(e){}
 }
 function kjShow(){
   KJ.shown=true;
+  if(padHasInk()){ padSnapshot('KJMINEWRAP'); ge('KJMINE').style.display='block'; }
+  ge('KJPAD').style.display='none';
   ge('KJANS').style.display='block';
   ge('KJSHOW').style.display='none';
   ge('KJJUDGE').style.display='flex';
