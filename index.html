@@ -7,6 +7,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <title>中学受験 問題アプリ</title>
 <style>
+.cz{display:inline-block;min-width:3.4em;padding:0 .3em;margin:0 .1em;border-radius:5px;background:#f0b9c6;border:1px solid #dd93a5;color:transparent;font-weight:700;letter-spacing:.04em;cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+.cz.on{background:transparent;border-color:transparent;border-bottom:2px solid #c0392b;border-radius:0;color:#c0392b}
+.czr{font-size:.62em;color:transparent;font-weight:400;margin-left:.15em}
+.cz.on .czr{color:#6b6860}
 :root{--bg:#f5f4f0;--card:#fff;--b1:#e5e3dc;--b2:#ccc9be;--tx:#1a1917;--mt:#6b6860;--ht:#9b9890;--bl:#2558c8;--blbg:#eaf0fd;--bltx:#1a3a8f;--gn:#1e7a3c;--gnbg:#eaf5ee;--gntx:#155228;--rd:#c0392b;--rdbg:#fdf0ee;--rdtx:#7a1a12;--am:#b06a00;--ambg:#fdf4e3;--amtx:#6b4000}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
@@ -189,6 +193,24 @@ select:disabled{opacity:.4}
         <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;padding:4px 2px">
           <input type="checkbox" id="FKJ" style="width:18px;height:18px"> 漢字ランダム（漢字・ことばだけをランダム順に出題）
         </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;padding:4px 2px">
+          <input type="checkbox" id="FIC" style="width:18px;height:18px"> 一問一答スピード（赤シート／声に出して答える）
+        </label>
+        <div id="ICOPT" style="display:none;padding:4px 2px 4px 26px">
+          <label style="font-size:13px;color:var(--mt);display:block;margin-bottom:6px">出題数：
+            <select id="FICN" style="font-size:13px;padding:2px 6px">
+              <option value="20">20問</option><option value="30" selected>30問</option>
+              <option value="50">50問</option><option value="100">100問</option><option value="0">すべて</option>
+            </select>
+          </label>
+          <label style="font-size:13px;color:var(--mt);display:block">1問の制限時間：
+            <select id="FICT" style="font-size:13px;padding:2px 6px">
+              <option value="0">なし</option><option value="5">5秒</option>
+              <option value="8" selected>8秒</option><option value="12">12秒</option><option value="20">20秒</option>
+            </select>
+          </label>
+          <div style="font-size:11px;color:var(--ht);margin-top:6px;line-height:1.6">回を「全回」にしておくと過去の回が混ざって出ます（総合テスト対策にはこちらが有効）。</div>
+        </div>
         <div id="KJOPT" style="display:none;padding:4px 2px 4px 26px">
           <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:6px">
             <input type="checkbox" id="FKJW" style="width:16px;height:16px" checked> 書き取り練習（紙に書く→こたえを大きく表示）
@@ -275,6 +297,29 @@ select:disabled{opacity:.4}
       マスに指かペンで書いてから「こたえを見る」を押し、字の形・とめ・はね・送りがなまで見くらべましょう。紙に書きたいときは「ぜんぶ消す」の右のマス数を1にして、画面は使わなくてもかまいません。
     </div>
   </div>
+  <div class="pg" id="PG6">
+    <div class="card" style="padding:16px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:12px;color:var(--mt);white-space:nowrap" id="ICPOS">1 / 30</span>
+        <span class="tg" id="ICTAG" style="font-size:11px;overflow:hidden;text-overflow:ellipsis"></span>
+        <button id="ICEND" style="font-size:12px;padding:4px 10px;border:1px solid var(--b2);background:var(--bg);color:var(--mt);border-radius:6px;cursor:pointer;white-space:nowrap">終了</button>
+      </div>
+      <div id="ICBAR" style="height:6px;background:#e9e7e0;border-radius:3px;overflow:hidden;margin-bottom:16px">
+        <div id="ICBARF" style="height:100%;width:100%;background:var(--gn)"></div>
+      </div>
+      <div id="ICQ" style="font-size:20px;line-height:2.3;font-weight:600;text-align:left;margin:4px 2px 14px"></div>
+      <div id="ICHINT" style="font-size:13px;color:var(--mt);text-align:left;margin-bottom:12px"></div>
+      <button id="ICALL" class="ckbtn" style="width:100%;margin-bottom:10px">ぜんぶ表示</button>
+      <div id="ICJUDGE" style="display:none;gap:10px;margin-bottom:6px">
+        <button id="ICNG" style="flex:1;padding:14px;border:1px solid var(--rd);background:var(--bg);color:var(--rd);border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">言えなかった</button>
+        <button id="ICOK" style="flex:1;padding:14px;border:none;background:var(--gn);color:#fff;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">言えた</button>
+      </div>
+      <div id="ICNOTE" style="font-size:13px;color:var(--mt);text-align:left;white-space:pre-wrap;margin-top:12px;line-height:1.8"></div>
+    </div>
+    <div class="card" style="padding:12px 14px;font-size:12px;color:var(--mt);line-height:1.7">
+      ピンクのところを<b>声に出して</b>答えてから、タップして答え合わせ。ぜんぶ合っていたら「言えた」、少しでもあやふやなら「言えなかった」を押します。「言えなかった」ものは復習モードでまた出てきます。
+    </div>
+  </div>
   <div class="pg" id="PG3"><div class="lbl">学習履歴</div><div id="HL"></div></div>
   <div class="pg" id="PG4">
     <div class="card">
@@ -302,11 +347,11 @@ select:disabled{opacity:.4}
 <script>
 var AQ=[];
 var WK=[
-  {s:'社会',t:'都道府県・地方区分',p:46,c:'#EF9F27',a:'最弱点 偏差値46.2',fs:'社会',fsr:'上',fk:6},
-  {s:'国語',t:'語彙・漢字',p:53,c:'#ED93B1',a:'語彙不足 偏差値52.7',fs:'国語',fsr:'',fk:null},
-  {s:'国語',t:'設問の型対応',p:54,c:'#ED93B1',a:'理由・気持ちが不安定',fs:'国語',fsr:'',fk:null},
-  {s:'算数',t:'計算精度・時間',p:64,c:'#85B7EB',a:'ケアレスで得点ロス',fs:'算数',fsr:'',fk:null},
-  {s:'理科',t:'応用問題',p:58,c:'#97C459',a:'基礎は安定',fs:'理科',fsr:'',fk:null}
+  {s:'社会',t:'都道府県・県庁所在地',p:38,c:'#EF9F27',a:'最弱点 偏差値37.9（第5回）／赤シートで固める',fs:'社会',fsr:'上',fk:6,ic:1},
+  {s:'社会',t:'各地方のくらし（総合）',p:38,c:'#EF9F27',a:'組分けの大問3が毎回ほぼ白紙',fs:'社会',fsr:'上',fk:null,ic:1},
+  {s:'国語',t:'漢字・語句',p:51,c:'#ED93B1',a:'漢字10問中4〜5問失点 偏差値51.0',fs:'国語',fsr:'',fk:null},
+  {s:'理科',t:'生物・季節の知識',p:52,c:'#97C459',a:'偏差値52.4 第5回で下降',fs:'理科',fsr:'',fk:null,ic:1},
+  {s:'算数',t:'計算精度・時間',p:66,c:'#85B7EB',a:'偏差値65.8 いまの強み',fs:'算数',fsr:'',fk:null}
 ];
 var DT={'基本':{'choice':60,'text':90},'標準':{'choice':90,'text':150},'S入門':{'choice':120,'text':210},'S中堅':{'choice':150,'text':270},'S上位':{'choice':180,'text':360},'S最難':{'choice':240,'text':480},'特訓':{'choice':300,'text':600}};
 var STAG={'算数':'tg-s','国語':'tg-k','社会':'tg-sh','理科':'tg-r'};
@@ -374,8 +419,12 @@ document.addEventListener('DOMContentLoaded',function(){
   ge('KJOK').addEventListener('click',function(){kjNext(true);});
   ge('KJNG').addEventListener('click',function(){kjNext(false);});
   ge('KJEND').addEventListener('click',function(){if(KJ.ok+KJ.ng>0){kjFinish();}else{shP(0);}});
+  ge('ICALL').addEventListener('click',function(){icAll();});
+  ge('ICOK').addEventListener('click',function(){icNext(true);});
+  ge('ICNG').addEventListener('click',function(){icNext(false);});
+  ge('ICEND').addEventListener('click',function(){icStop();if(IC.ok+IC.ng>0){icFinish();}else{shP(0);}});
   ge('RSTBTN').addEventListener('click',function(){rstA();});
-  var fi=['FS','FSER','FK','FU','FD','FRV','FEW','FTH','FGM','FKJ','FKJN','FKJW'];
+  var fi=['FS','FSER','FK','FU','FD','FRV','FEW','FTH','FGM','FKJ','FKJN','FKJW','FIC','FICN','FICT'];
   for(var i=0;i<fi.length;i++){
     (function(id){
       var el=ge(id);if(!el)return;
@@ -402,6 +451,13 @@ document.addEventListener('DOMContentLoaded',function(){
     .then(function(r){return r.json();})
     .then(function(d){
       AQ=Array.isArray(d)?d:(d.questions||d);
+      for(var qi=0;qi<AQ.length;qi++){
+        var qq=AQ[qi];
+        if(qq&&qq.fmt==='cloze'&&qq.cloze){
+          if(!qq.question)qq.question=czPlain(qq.cloze);
+          if(!qq.answer)qq.answer=czAnswers(qq.cloze).join('／');
+        }
+      }
       ge('LOADING').style.display='none';
       ge('HOME_CONTENT').style.display='block';
       rnW();bK();upMC();upDI();
@@ -411,15 +467,15 @@ document.addEventListener('DOMContentLoaded',function(){
     });
 });
 
-function gH(){stpT();shP(0);upST();}
+function gH(){stpT();icStop();shP(0);upST();}
 function gR(){shP(3);rnH();}
 function gS(){shP(4);upDI();}
 function shP(n){
-  for(var i=0;i<6;i++){var e=ge('PG'+i);if(e)e.classList.toggle('on',i===n);}
+  for(var i=0;i<7;i++){var e=ge('PG'+i);if(e)e.classList.toggle('on',i===n);}
   ge('NB0').classList.toggle('on',n<3||n===5);ge('NB1').classList.toggle('on',n===3);ge('NB2').classList.toggle('on',n===4);
   try{ge('MAIN').scrollTop=0;}catch(e){}
 }
-function onF(id){if(id==='FS'||id==='FSER')bK();else if(id==='FK')bU();else if(id==='FTH'){var v=parseInt(ge('FTH').value,10);if(!isNaN(v)&&v>=1){TH=v;svTH();}upMC();}else upMC();}
+function onF(id){if(id==='FIC'&&ge('FIC').checked&&ge('FKJ'))ge('FKJ').checked=false;if(id==='FKJ'&&ge('FKJ').checked&&ge('FIC'))ge('FIC').checked=false;if(id==='FS'||id==='FSER')bK();else if(id==='FK')bU();else if(id==='FTH'){var v=parseInt(ge('FTH').value,10);if(!isNaN(v)&&v>=1){TH=v;svTH();}upMC();}else upMC();}
 function svS(){try{localStorage.setItem('jst3_'+PROF,JSON.stringify(ST2));}catch(e){}}
 function svH(){try{localStorage.setItem('jhi3_'+PROF,JSON.stringify(HS.slice(-50)));}catch(e){}}
 function upST(){
@@ -445,7 +501,9 @@ function rnW(){
 function pW(i){
   var cs=document.querySelectorAll('.wc');for(var j=0;j<cs.length;j++)cs[j].classList.toggle('on',j===i);
   var w=WK[i];ge('FS').value=w.fs||'';ge('FSER').value=w.fsr||'';bK();
-  if(w.fk!=null){ge('FK').value=String(w.fk);bU();}upMC();
+  if(w.fk!=null){ge('FK').value=String(w.fk);bU();}
+  if(ge('FIC')){ge('FIC').checked=!!w.ic;if(w.ic&&ge('FKJ'))ge('FKJ').checked=false;}
+  upMC();
 }
 // 総合回（第5・10・15・20回）→ その範囲の構成回
 var TRAINMAP={1:'記述練習',2:'選択肢の消去',3:'2択決着',4:'漢字・語句',5:'思考力（規則性）',6:'思考力（規則性・発展）',7:'思考力（平面図形）',8:'思考力（数の性質・条件整理）'};
@@ -498,8 +556,18 @@ function bU(){
 function upMC(){
   var rev=ge('FRV')&&ge('FRV').checked,few=ge('FEW')&&ge('FEW').checked,gm=ge('FGM')&&ge('FGM').checked;
   var kj=ge('FKJ')&&ge('FKJ').checked;
+  var ic=ge('FIC')&&ge('FIC').checked;
   var p=pl(),el=ge('MC');
   var kopt=ge('KJOPT');if(kopt)kopt.style.display=kj?'block':'none';
+  var iopt=ge('ICOPT');if(iopt)iopt.style.display=ic?'block':'none';
+  if(ic){
+    var ip=icPool();
+    var inn=parseInt(ge('FICN')?ge('FICN').value:'30',10);
+    var iout=(isNaN(inn)||inn<=0)?ip.length:Math.min(inn,ip.length);
+    el.textContent='一問一答スピード 出題予定：'+iout+'問（該当'+ip.length+'問からランダム順）';
+    el.style.color=iout===0?'var(--rd)':'var(--mt)';
+    return;
+  }
   if(kj){
     var kp=kjPool();
     var n=parseInt(ge('FKJN')?ge('FKJN').value:'20',10);
@@ -642,6 +710,158 @@ function padSetN(n){
   }
 }
 
+
+/* ===== 一問一答スピードモード（赤シート） ===== */
+function czParse(s){
+  var out=[],re=/\{\{([^}]*)\}\}/g,last=0,m;
+  while((m=re.exec(s))!==null){
+    if(m.index>last)out.push({t:0,v:s.slice(last,m.index)});
+    var pr=m[1].split('|');
+    out.push({t:1,v:pr[0],r:pr[1]||''});
+    last=re.lastIndex;
+  }
+  if(last<s.length)out.push({t:0,v:s.slice(last)});
+  return out;
+}
+function czAnswers(s){var a=[],p=czParse(s);for(var i=0;i<p.length;i++)if(p[i].t===1)a.push(p[i].v);return a;}
+function czPlain(s){return String(s).replace(/\{\{([^}|]*)(\|[^}]*)?\}\}/g,'（\u3000\u3000）');}
+
+var IC={qs:[],i:0,ok:0,ng:0,wrong:[],total:0,revealed:0,tid:null,left:0,lim:0,timeup:false};
+function icIsShort(q){
+  if(!q)return false;
+  if(q.fmt==='cloze'&&q.cloze)return true;
+  if(q.fmt==='choice')return false;
+  var a=(q.answer||'').replace(/[\s\u3000]/g,'');
+  if(!a)return false;
+  if(a.length>14)return false;
+  if(a.indexOf('\n')>=0)return false;
+  if(/[。、]/.test(a))return false;
+  if(/^[（(]?\s*[1１]\s*[)）]/.test(a))return false;
+  return true;
+}
+function icPool(){var p=pl(),o=[];for(var i=0;i<p.length;i++)if(icIsShort(p[i]))o.push(p[i]);return o;}
+function icSample(){
+  var pool=shArr(icPool());
+  var n=parseInt(ge('FICN')?ge('FICN').value:'30',10);
+  if(isNaN(n)||n<=0)return pool;
+  return pool.slice(0,n);
+}
+function icStop(){if(IC.tid){clearInterval(IC.tid);IC.tid=null;}}
+function icTimer(){
+  icStop();
+  var bar=ge('ICBAR'),f=ge('ICBARF');
+  if(!IC.lim){bar.style.display='none';return;}
+  bar.style.display='block';
+  IC.left=IC.lim;f.style.width='100%';f.style.background='var(--gn)';
+  IC.tid=setInterval(function(){
+    IC.left-=0.1;
+    var pc=Math.max(0,IC.left/IC.lim*100);
+    f.style.width=pc+'%';
+    f.style.background=pc<25?'var(--rd)':(pc<55?'var(--am)':'var(--gn)');
+    if(IC.left<=0){IC.timeup=true;icStop();icAll();}
+  },100);
+}
+function icStart(qs){
+  var lim=parseInt(ge('FICT')?ge('FICT').value:'8',10);
+  IC={qs:qs,i:0,ok:0,ng:0,wrong:[],total:0,revealed:0,tid:null,left:0,lim:(isNaN(lim)?0:lim),timeup:false};
+  shP(6);icRender();
+}
+function icRender(){
+  var q=IC.qs[IC.i];if(!q){icFinish();return;}
+  IC.timeup=false;IC.total=0;IC.revealed=0;
+  ge('ICPOS').textContent=(IC.i+1)+' / '+IC.qs.length;
+  var tg=ge('ICTAG');
+  tg.textContent=q.subject+'・'+lblKai(q.series,q.kai)+(q.unit?'・'+q.unit:'');
+  tg.className='tg '+(STAG[q.subject]||'');
+  var box=ge('ICQ');box.innerHTML='';
+  function chip(txt,ruby){
+    IC.total++;
+    var b=document.createElement('span');
+    b.className='cz';b.appendChild(document.createTextNode(txt));
+    if(ruby){var r=document.createElement('span');r.className='czr';r.textContent='('+ruby+')';b.appendChild(r);}
+    b.addEventListener('click',function(){icOpen(this);});
+    return b;
+  }
+  if(q.fmt==='cloze'&&q.cloze){
+    var pp=czParse(q.cloze);
+    for(var i=0;i<pp.length;i++){
+      if(pp[i].t===0){var sp=document.createElement('span');sp.textContent=pp[i].v;box.appendChild(sp);}
+      else box.appendChild(chip(pp[i].v,pp[i].r));
+    }
+  }else{
+    var qd=document.createElement('div');
+    qd.textContent=q.question||'';
+    qd.style.cssText='margin-bottom:14px;font-size:18px;line-height:1.9';
+    box.appendChild(qd);
+    var wrap=document.createElement('div');
+    wrap.style.cssText='text-align:center;font-size:26px';
+    wrap.appendChild(chip(q.answer||'',''));
+    box.appendChild(wrap);
+  }
+  var hs=(q.hints&&q.hints.length)?q.hints[0]:(q.hint||'');
+  ge('ICHINT').textContent=hs?('ヒント：'+hs):'';
+  ge('ICNOTE').textContent='';
+  ge('ICALL').style.display='block';
+  ge('ICJUDGE').style.display='none';
+  try{ge('MAIN').scrollTop=0;}catch(e){}
+  icTimer();
+}
+function icOpen(el){
+  if(el.classList.contains('on'))return;
+  el.classList.add('on');IC.revealed++;
+  if(IC.revealed>=IC.total)icDone();
+}
+function icAll(){
+  var cs=ge('ICQ').querySelectorAll('.cz');
+  for(var i=0;i<cs.length;i++)cs[i].classList.add('on');
+  IC.revealed=IC.total;icDone();
+}
+function icDone(){
+  icStop();
+  var q=IC.qs[IC.i];
+  ge('ICALL').style.display='none';
+  ge('ICJUDGE').style.display='flex';
+  var n=[];
+  if(IC.timeup)n.push('\u23f1 時間切れ');
+  if(q&&q.explanation)n.push(q.explanation);
+  if(q&&q.point)n.push('\u25b6 '+q.point);
+  ge('ICNOTE').textContent=n.join('\n\n');
+}
+function icNext(ok){
+  icStop();
+  var q=IC.qs[IC.i];
+  if(ok){IC.ok++;}else{IC.ng++;if(q)IC.wrong.push(q);}
+  if(q){
+    try{
+      var sub=q.subject,id=q.id;
+      ST2.total++;if(!ST2.sub[sub])ST2.sub[sub]={t:0,c:0};ST2.sub[sub].t++;
+      if(ok){ST2.correct++;ST2.sub[sub].c++;delete WR[id];if(id in EW)EW[id]=EW[id]+1;}
+      else{WR[id]=1;EW[id]=0;}
+      svS();svW();svEW();upST();
+    }catch(e){}
+  }
+  IC.i++;
+  if(IC.i>=IC.qs.length)icFinish();else icRender();
+}
+function icFinish(){
+  icStop();
+  var n=IC.ok+IC.ng;
+  ge('RS').textContent=IC.ok;
+  ge('RL').textContent='／'+n+'問 言えました';
+  var r=n>0?Math.round(IC.ok/n*100):0;
+  ge('RM').textContent=r>=90?'ほぼ完ぺき。この調子で回しましょう':r>=70?'よく出ています。言えなかったものだけもう一周':r>=50?'あと一息。言えなかったものを今日中にもう一度':'まずは言えなかったものだけをくり返しましょう';
+  var rb=ge('RB');rb.innerHTML='';
+  if(IC.wrong.length){
+    var b=document.createElement('button');
+    b.className='rpb';b.style.marginBottom='10px';
+    b.textContent='言えなかった'+IC.wrong.length+'問をもう一度';
+    (function(w){b.addEventListener('click',function(){icStart(shArr(w.slice()));});})(IC.wrong);
+    rb.appendChild(b);
+  }
+  try{HS.push({d:new Date().toISOString(),n:n,c:IC.ok,s:'一問一答スピード'});svH();}catch(e){}
+  shP(2);
+}
+
 var KJ={qs:[],i:0,ok:0,ng:0,shown:false,wrong:[]};
 function kjStart(qs){
   KJ={qs:qs,i:0,ok:0,ng:0,shown:false,wrong:[]};
@@ -765,6 +985,11 @@ function gmSample(pool){
 function stS(){
   var gm=ge('FGM')&&ge('FGM').checked;
   var kjm=ge('FKJ')&&ge('FKJ').checked;
+  if(ge('FIC')&&ge('FIC').checked){
+    var iqs=icSample();
+    if(!iqs.length){alert('一問一答にできる問題が見つかりません。科目・巻・回の条件をゆるめてください。');return;}
+    icStart(iqs);return;
+  }
   if(kjm){
     var kqs=kjSample();
     if(!kqs.length){alert('漢字・ことばの問題が見つかりません（科目「国語」で回を選び直してください）');return;}
