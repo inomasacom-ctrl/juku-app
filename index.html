@@ -209,7 +209,7 @@ select:disabled{opacity:.4}
               <option value="8" selected>8秒</option><option value="12">12秒</option><option value="20">20秒</option>
             </select>
           </label>
-          <div style="font-size:11px;color:var(--ht);margin-top:6px;line-height:1.6">回を「全回」にしておくと過去の回が混ざって出ます（総合テスト対策にはこちらが有効）。</div>
+          <div style="font-size:11px;color:var(--ht);margin-top:6px;line-height:1.6">回を選べばその回だけ、「全回」にすれば過去の回も混ざって出ます。週テスト前は回を選び、総合テスト前は「全回」がおすすめです。</div>
         </div>
         <div id="KJOPT" style="display:none;padding:4px 2px 4px 26px">
           <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:6px">
@@ -562,9 +562,10 @@ function upMC(){
   var iopt=ge('ICOPT');if(iopt)iopt.style.display=ic?'block':'none';
   if(ic){
     var ip=icPool();
+    var czn=0;for(var ii=0;ii<ip.length;ii++)if(ip[ii].fmt==='cloze')czn++;
     var inn=parseInt(ge('FICN')?ge('FICN').value:'30',10);
     var iout=(isNaN(inn)||inn<=0)?ip.length:Math.min(inn,ip.length);
-    el.textContent='一問一答スピード 出題予定：'+iout+'問（該当'+ip.length+'問からランダム順）';
+    el.textContent='一問一答スピード 出題予定：'+iout+'問（該当'+ip.length+'問／うち赤シート型'+czn+'問）';
     el.style.color=iout===0?'var(--rd)':'var(--mt)';
     return;
   }
@@ -934,6 +935,7 @@ function kjFinish(){
 }
 function isKJ(q){
   if(q.subject!=='国語')return false;
+  if(q.fmt==='cloze')return false; /* 赤シート型は書き取り練習に入れない */
   var u=q.unit||'';
   return u.indexOf('漢字')>=0||u.indexOf('ことわざ')>=0||u.indexOf('慣用')>=0||u.indexOf('熟語')>=0
     ||u.indexOf('対義語')>=0||u.indexOf('類義語')>=0||u.indexOf('部首')>=0||u.indexOf('送りがな')>=0
