@@ -89,6 +89,20 @@ select:disabled{opacity:.4}
 .dibox{background:var(--gnbg);border:1px solid var(--gn);border-radius:8px;padding:12px;font-size:13px;color:var(--gntx);margin-top:10px}
 .em{text-align:center;padding:40px;color:var(--ht);font-size:14px}
 .loading{text-align:center;padding:60px 20px;color:var(--mt);font-size:15px}
+.kgv{border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.7;margin-bottom:8px}
+.kgv.ok{background:var(--gnbg);color:var(--gntx);border-left:4px solid var(--gn)}
+.kgv.ng{background:var(--rdbg);color:var(--rdtx);border-left:4px solid var(--rd)}
+.kgv.fix{background:var(--ambg);color:var(--amtx);border-left:4px solid var(--am)}
+.kgv ul{margin:4px 0 4px 1.2em}.kgv li{margin:2px 0}.kgv b{font-size:16px;margin-right:4px}
+.kgh{font-weight:800;font-size:15px;margin-bottom:2px}.kgn{font-size:11px;color:var(--mt);margin-top:4px}
+.ckbtn.kgng{background:var(--rd)}
+.kglk{background:none;border:none;color:var(--mt);font-size:12px;text-decoration:underline;cursor:pointer;padding:6px 2px;font-family:inherit}
+.kgov{position:fixed;inset:0;background:rgba(20,20,18,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.kgmc{background:var(--card);border-radius:12px;padding:16px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:8px}
+.kgmt{font-weight:700;font-size:15px;margin-bottom:2px}.kgms{font-size:12px;color:var(--mt);line-height:1.6}
+.kgmb{border:1.5px solid var(--b2);background:var(--card);color:var(--tx);border-radius:8px;padding:11px 12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left}
+.kgmb.ok{border-color:var(--gn);color:var(--gntx);background:var(--gnbg)}.kgmb.ng{border-color:var(--rd);color:var(--rdtx);background:var(--rdbg)}
+#KGPINI{font-size:26px;letter-spacing:.5em;text-align:center;padding:8px;border:1.5px solid var(--b2);border-radius:8px;width:100%;font-family:inherit}
 </style>
 </head>
 <body>
@@ -255,11 +269,11 @@ select:disabled{opacity:.4}
         <span class="tg" id="KJTAG" style="font-size:11px"></span>
         <button id="KJEND" style="font-size:12px;padding:4px 10px;border:1px solid var(--bd);background:var(--bg);color:var(--mt);border-radius:6px;cursor:pointer">終了</button>
       </div>
-      <div id="KJQ" style="font-size:19px;line-height:1.9;font-weight:600;margin:10px 4px 18px;text-align:left"></div>
+      <div id="KJQ" style="font-size:19px;line-height:1.9;font-weight:600;margin:10px 4px 18px;text-align:left;white-space:pre-wrap"></div>
       <div id="KJHINT" style="font-size:13px;color:var(--mt);margin-bottom:14px;min-height:0"></div>
 
       <div id="KJPAD" style="margin:0 0 12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div id="KJTOOLS" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <span style="font-size:12px;color:var(--mt)">ここに指かペンで書く</span>
           <span style="display:flex;gap:6px">
             <button id="KJUNDO" style="font-size:12px;padding:5px 10px;border:1px solid var(--bd);background:var(--bg);color:var(--mt);border-radius:6px;cursor:pointer">1画もどす</button>
@@ -267,7 +281,7 @@ select:disabled{opacity:.4}
           </span>
         </div>
         <div id="KJCVWRAP" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+        <div id="KJBOXROW" style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
           <span style="font-size:11px;color:var(--mt)">マス数</span>
           <span style="display:flex;gap:4px" id="KJBOXN">
             <button data-n="1" style="font-size:12px;padding:4px 9px;border:1px solid var(--bd);background:var(--bg);border-radius:6px;cursor:pointer">1</button>
@@ -277,6 +291,7 @@ select:disabled{opacity:.4}
           </span>
         </div>
       </div>
+      <div id="KJRES" style="display:none;text-align:left;margin:0 0 12px"></div>
 
       <div id="KJANS" style="display:none;margin:10px 0 16px">
         <div style="font-size:12px;color:var(--mt);margin-bottom:6px">こたえ</div>
@@ -288,13 +303,19 @@ select:disabled{opacity:.4}
         <div id="KJNOTE" style="font-size:13px;color:var(--mt);text-align:left;margin-top:10px;white-space:pre-wrap"></div>
       </div>
       <button id="KJSHOW" class="ckbtn" style="width:100%;margin-bottom:10px">こたえを見る</button>
+      <button id="KJGRADE" class="ckbtn" style="width:100%;margin-bottom:10px;display:none">採点する</button>
+      <div id="KJAUTO" style="display:none;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+        <button id="KJNEXT" class="ckbtn" style="flex:1">つぎへ</button>
+        <button id="KJRETRY" class="htbtn" style="flex:1">もう一度書く</button>
+        <button id="KJFIX" class="kglk" type="button" style="flex-basis:100%">判定がおかしい？（保護者が判定をなおす）</button>
+      </div>
       <div id="KJJUDGE" style="display:none;gap:10px;margin-bottom:6px;flex-wrap:nowrap">
         <button id="KJNG" style="flex:1;padding:12px;border:1px solid var(--rd);background:var(--bg);color:var(--rd);border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">まちがえた</button>
         <button id="KJOK" style="flex:1;padding:12px;border:none;background:var(--gr);color:#fff;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">書けた</button>
       </div>
     </div>
     <div class="card" style="padding:12px 14px;font-size:12px;color:var(--mt);line-height:1.7">
-      マスに指かペンで書いてから「こたえを見る」を押し、字の形・とめ・はね・送りがなまで見くらべましょう。紙に書きたいときは「ぜんぶ消す」の右のマス数を1にして、画面は使わなくてもかまいません。
+      答えに漢字がある問題は、マスに書いて「採点する」を押すと、画数・書き順・向き・長さ・つき出し・はね・はらいを自動で採点します。とめの形だけは機械で見分けられないので、こたえと見くらべてください。<br>読みの問題や長い答えは、今までどおり「こたえを見る」で自分で○×をつけます。
     </div>
   </div>
   <div class="pg" id="PG6">
@@ -326,9 +347,24 @@ select:disabled{opacity:.4}
       <div class="lbl">問題データ</div>
       <div id="DI" style="font-size:13px;color:var(--mt);margin-bottom:12px"></div>
     </div>
+    <div class="card" id="KGCFG">
+      <div class="lbl">書き取りの自動採点</div>
+      <div class="fr">
+        <div class="fg"><label>自動採点</label><select id="KGON"><option value="1">使う</option><option value="0">使わない（自分で○×）</option></select></div>
+        <div class="fg"><label>判定の厳しさ</label><select id="KGLV"><option value="test">テスト基準</option><option value="normal">ふつう</option></select></div>
+      </div>
+      <div id="KGSUM" style="font-size:12px;color:var(--mt);line-height:1.8;margin-bottom:8px"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="htbtn" id="KGPINBTN" type="button" style="flex:1">暗証番号を設定・変更</button>
+        <button class="htbtn" id="KGRESET" type="button" style="flex:1">学習を元にもどす</button>
+      </div>
+      <div style="font-size:12px;color:var(--mt);margin-bottom:4px">判定ミスの記録（保護者が判定をなおした時の線のデータ。判定の調整に使います）</div>
+      <textarea id="KGREP" readonly style="width:100%;height:60px;font-size:10px;box-sizing:border-box" placeholder="まだ記録はありません"></textarea>
+      <button class="kglk" id="KGREPCLR" type="button">記録を消す</button>
+    </div>
     <div class="card">
       <div class="lbl">バックアップ（端末を変えるとき）</div>
-      <div style="font-size:12px;color:var(--mt);margin-bottom:8px">「書き出し」でコードを作り、新しい端末の同じらんに貼り付けて「読み込み」を押すと、いま選んでいる学習者（①または②）の成績・履歴・×リストを移せます。</div>
+      <div style="font-size:12px;color:var(--mt);margin-bottom:8px">「書き出し」でコードを作り、新しい端末の同じらんに貼り付けて「読み込み」を押すと、いま選んでいる学習者（①または②）の成績・履歴・×リスト・書き取り採点の学習内容を移せます。</div>
       <textarea id="BKTA" style="width:100%;height:70px;font-size:11px;box-sizing:border-box" placeholder="ここにコードが出ます／貼り付けます"></textarea>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="stbtn" id="BKEXP" style="flex:1">書き出し</button>
@@ -338,6 +374,14 @@ select:disabled{opacity:.4}
     <div class="card"><div class="lbl">成績リセット</div><button class="stbtn" id="RSTBTN" style="background:var(--rd)">全成績をリセット</button></div>
   </div>
 </div>
+<div class="kgov" id="KGPIN"><div class="kgmc">
+  <div class="kgmt" id="KGPINT">保護者の暗証番号</div>
+  <div class="kgms" id="KGPINS"></div>
+  <input id="KGPINI" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" aria-label="暗証番号">
+  <div id="KGPINE" style="font-size:12px;color:var(--rd);min-height:16px"></div>
+  <div style="display:flex;gap:8px"><button class="kgmb" id="KGPINX" type="button" style="flex:1;text-align:center">やめる</button><button class="kgmb ok" id="KGPINOK" type="button" style="flex:1;text-align:center">OK</button></div>
+</div></div>
+<div class="kgov" id="KGMENU"></div>
 <nav class="bnv">
   <button class="nb on" id="NB0" type="button"><span>&#127968;</span>ホーム</button>
   <button class="nb" id="NB1" type="button"><span>&#128202;</span>履歴</button>
@@ -369,6 +413,7 @@ function loadProf(){
   try{var h=localStorage.getItem('jhi3_'+PROF);HS=h?JSON.parse(h):[];}catch(e){HS=[];}
   try{var w=localStorage.getItem('jwr3_'+PROF);WR=w?JSON.parse(w):{};}catch(e){WR={};}
   try{var v=localStorage.getItem('jew3_'+PROF);EW=v?JSON.parse(v):{};}catch(e){EW={};}
+  try{lrnLoad();}catch(e){}
 }
 function svW(){try{localStorage.setItem('jwr3_'+PROF,JSON.stringify(WR));}catch(e){}}
 function svEW(){try{localStorage.setItem('jew3_'+PROF,JSON.stringify(EW));}catch(e){}}
@@ -378,9 +423,9 @@ function loadTH(){try{var t=localStorage.getItem('jth3');TH=t?parseInt(t,10):3;}
 function svTH(){try{localStorage.setItem('jth3',String(TH));}catch(e){}}
 function prfStyle(active){return 'flex:1;padding:8px 10px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;'+(active?'background:#2563eb;color:#fff':'background:#e8eef5;color:#55606e');}
 function styleProf(){var b1=ge('PRF1'),b2=ge('PRF2');if(b1)b1.style.cssText=prfStyle(PROF===1);if(b2)b2.style.cssText=prfStyle(PROF===2);}
-function setProf(p){PROF=p;try{localStorage.setItem('jprof',String(p));}catch(e){}styleProf();loadProf();upST();bK();upMC();}
+function setProf(p){PROF=p;try{localStorage.setItem('jprof',String(p));}catch(e){}styleProf();loadProf();upST();bK();upMC();try{kgRenderCfg();}catch(e){}}
 function bkExport(){
-  var data={p:PROF,st:ST2,hs:HS,wr:WR,ew:EW},code='';
+  var data={p:PROF,st:ST2,hs:HS,wr:WR,ew:EW,kl:LRN},code='';
   try{code=btoa(unescape(encodeURIComponent(JSON.stringify(data))));}catch(e){code='';}
   var ta=ge('BKTA');if(ta){ta.value=code;ta.focus();ta.select();}
   alert('この「コード」をコピーして、新しい端末の同じらんに貼り付け、「読み込み」を押してください。');
@@ -390,7 +435,8 @@ function bkImport(){
   var data;try{data=JSON.parse(decodeURIComponent(escape(atob(ta.value.trim()))));}catch(e){alert('コードが正しくありません');return;}
   if(!confirm('今のプロフィール（学習者'+PROF+'）に読み込みます。今のデータは上書きされます。よろしいですか？'))return;
   if(data.st)ST2=data.st;if(data.hs)HS=data.hs;if(data.wr)WR=data.wr;if(data.ew)EW=data.ew;
-  svS();svH();svW();svEW();upST();bK();upMC();alert('読み込みました');
+  if(data.kl&&typeof data.kl==='object'){LRN=data.kl;LRN.c=LRN.c||{};LRN.rx=LRN.rx||{};LRN.no=LRN.no||{};LRN.rep=LRN.rep||[];lrnSave();}
+  svS();svH();svW();svEW();upST();bK();upMC();try{kgRenderCfg();}catch(e){}alert('読み込みました');
 }
 
 // ナビボタン：ページ読み込み直後に設定（window.onload不要）
@@ -403,6 +449,10 @@ document.addEventListener('DOMContentLoaded',function(){
   ge('CKBTN').addEventListener('click',function(){chkA();});
   ge('HTBTN').addEventListener('click',function(){shH();});
   ge('KJSHOW').addEventListener('click',function(){kjShow();});
+  ge('KJGRADE').addEventListener('click',function(){kjGrade();});
+  ge('KJNEXT').addEventListener('click',function(){kjNext(KJ.graded===true);});
+  ge('KJRETRY').addEventListener('click',function(){kjRetry();});
+  ge('KJFIX').addEventListener('click',function(){kjFixOpen();});
   ge('KJCLR').addEventListener('click',function(){padClear();});
   ge('KJUNDO').addEventListener('click',function(){padUndo();});
   (function(){
@@ -414,7 +464,7 @@ document.addEventListener('DOMContentLoaded',function(){
     }
   })();
   window.addEventListener('resize',function(){
-    if(ge('PG5').classList.contains('on')&&!KJ.shown)padSetN(PAD.n);
+    if(ge('PG5').classList.contains('on')&&!KJ.shown){if(KJ.auto)kjPadSetup(KJ.qs[KJ.i]);else padSetN(PAD.n);}
   });
   ge('KJOK').addEventListener('click',function(){kjNext(true);});
   ge('KJNG').addEventListener('click',function(){kjNext(false);});
@@ -432,7 +482,7 @@ document.addEventListener('DOMContentLoaded',function(){
       el.addEventListener('input',function(){onF(id);});
     })(fi[i]);
   }
-  loadTH();
+  loadTH();kgLoadCfg();kgBindCfg();
   if(ge('FTH')){ge('FTH').value=String(TH);}
   // 既存データ（旧バージョン）を学習者①へ引き継ぎ（初回のみ）
   try{if(localStorage.getItem('jst3')&&!localStorage.getItem('jst3_1'))localStorage.setItem('jst3_1',localStorage.getItem('jst3'));}catch(e){}
@@ -469,7 +519,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
 function gH(){stpT();icStop();shP(0);upST();}
 function gR(){shP(3);rnH();}
-function gS(){shP(4);upDI();}
+function gS(){shP(4);upDI();try{kgRenderCfg();}catch(e){}}
 function shP(n){
   for(var i=0;i<7;i++){var e=ge('PG'+i);if(e)e.classList.toggle('on',i===n);}
   ge('NB0').classList.toggle('on',n<3||n===5);ge('NB1').classList.toggle('on',n===3);ge('NB2').classList.toggle('on',n===4);
@@ -596,14 +646,15 @@ function padCount(ans){
   var a=(ans||'').replace(/[\s\u3000]/g,'');
   var n=a.length; if(n<1)n=1; if(n>4)n=4; return n;
 }
-function padBuild(n,wrapId){
+function padBuild(n,wrapId,spec){
   PAD.n=n; PAD.boxes=[];
   var wrap=ge(wrapId); if(!wrap)return;
   wrap.innerHTML='';
   /* 画面幅に合わせてマスの大きさを決める */
   var avail=Math.min(wrap.clientWidth||320, 520);
   var size=Math.floor((avail-(n-1)*8)/n);
-  if(size>140)size=140; if(size<64)size=64;
+  var mx=spec?(n<=2?170:140):140;
+  if(size>mx)size=mx; if(size<64)size=64;
   var dpr=window.devicePixelRatio||1;
   for(var i=0;i<n;i++){
     var cv=document.createElement('canvas');
@@ -614,8 +665,9 @@ function padBuild(n,wrapId){
     var ctx=cv.getContext('2d');
     ctx.scale(dpr,dpr);
     var box={cv:cv,ctx:ctx,size:size,strokes:[],cur:null};
+    if(spec){box.ch=spec[i].c;box.fixed=!!spec[i].f;if(box.fixed){cv.style.cursor='default';cv.style.borderStyle='dashed';}}
     PAD.boxes.push(box);
-    padGrid(box);
+    padGrid(box);if(box.fixed)kgFixedDraw(box);
     padBind(box);
     wrap.appendChild(cv);
   }
@@ -648,37 +700,46 @@ function padRedraw(b){
 function padPos(b,e){
   var r=b.cv.getBoundingClientRect();
   var t=(e.touches&&e.touches[0])?e.touches[0]:e;
-  return {x:(t.clientX-r.left),y:(t.clientY-r.top)};
+  return {x:(t.clientX-r.left),y:(t.clientY-r.top),t:(e.timeStamp||Date.now())};
 }
 function padBind(b){
   function down(e){
+    if(b.locked||b.fixed)return;
     e.preventDefault();
+    if(PAD.pen===b&&b.cur)return;
+    try{if(e.pointerId!=null&&b.cv.setPointerCapture)b.cv.setPointerCapture(e.pointerId);}catch(x){}
     b.cur=[padPos(b,e)]; b.strokes.push(b.cur); PAD.pen=b; padRedraw(b);
   }
   function move(e){
     if(PAD.pen!==b||!b.cur)return;
     e.preventDefault();
-    b.cur.push(padPos(b,e)); padRedraw(b);
+    var evs=(e.getCoalescedEvents&&e.getCoalescedEvents())||[];
+    if(evs.length){for(var k=0;k<evs.length;k++)b.cur.push(padPos(b,evs[k]));}else b.cur.push(padPos(b,e));
+    padRedraw(b);
   }
-  function up(e){ if(PAD.pen===b){b.cur=null;PAD.pen=null;} }
-  b.cv.addEventListener('pointerdown',down);
-  b.cv.addEventListener('pointermove',move);
-  b.cv.addEventListener('pointerup',up);
-  b.cv.addEventListener('pointercancel',up);
-  b.cv.addEventListener('pointerleave',up);
-  /* 古い端末むけ */
-  b.cv.addEventListener('touchstart',down,{passive:false});
-  b.cv.addEventListener('touchmove',move,{passive:false});
-  b.cv.addEventListener('touchend',up);
-  b.cv.addEventListener('mousedown',down);
-  b.cv.addEventListener('mousemove',move);
-  b.cv.addEventListener('mouseup',up);
+  function up(e){ if(PAD.pen===b){ if(b.cur&&e&&e.clientX!=null){var q=padPos(b,e),l=b.cur[b.cur.length-1];if(!l||Math.abs(q.x-l.x)+Math.abs(q.y-l.y)>1)b.cur.push(q);} b.cur=null;PAD.pen=null;} }
+  if(window.PointerEvent){
+    /* ポインターイベントだけで受ける（タッチ・マウスと二重に記録しない） */
+    b.cv.addEventListener('pointerdown',down);
+    b.cv.addEventListener('pointermove',move);
+    b.cv.addEventListener('pointerup',up);
+    b.cv.addEventListener('pointercancel',up);
+  }else{
+    /* 古い端末むけ */
+    b.cv.addEventListener('touchstart',down,{passive:false});
+    b.cv.addEventListener('touchmove',move,{passive:false});
+    b.cv.addEventListener('touchend',up);
+    b.cv.addEventListener('mousedown',down);
+    b.cv.addEventListener('mousemove',move);
+    b.cv.addEventListener('mouseup',up);
+  }
 }
-function padClear(){ for(var i=0;i<PAD.boxes.length;i++){PAD.boxes[i].strokes=[];padGrid(PAD.boxes[i]);} }
+function padClear(){ for(var i=0;i<PAD.boxes.length;i++){var b=PAD.boxes[i];if(b.fixed||b.locked)continue;b.strokes=[];padGrid(b);} }
 function padUndo(){
   /* 最後に書いた画を1つ取り消す（右のマスから探す） */
   for(var i=PAD.boxes.length-1;i>=0;i--){
     var b=PAD.boxes[i];
+    if(b.locked)continue;
     if(b.strokes.length){ b.strokes.pop(); padRedraw(b); return; }
   }
 }
@@ -866,11 +927,18 @@ function icFinish(){
 var KJ={qs:[],i:0,ok:0,ng:0,shown:false,wrong:[]};
 function kjStart(qs){
   KJ={qs:qs,i:0,ok:0,ng:0,shown:false,wrong:[]};
-  shP(5);kjRender();
+  shP(5);
+  if(KG.on&&!KS){ge('KJQ').textContent='採点データを読み込み中…';ksLoad(function(){kjRender();});}
+  else kjRender();
+}
+function kjPadSetup(q){
+  var a=kjAns(q),pr=q.pr||'',spec=[];
+  for(var i=0;i<a.length;i++){var c=a.charAt(i);spec.push({c:c,f:pr.indexOf(c)>=0});}
+  padBuild(a.length,'KJCVWRAP',spec);
 }
 function kjRender(){
   var q=KJ.qs[KJ.i];if(!q){kjFinish();return;}
-  KJ.shown=false;
+  KJ.shown=false;KJ.graded=null;KJ.fix=null;KJ.fixed=false;KJ.auto=kjGradable(q);
   ge('KJPOS').textContent=(KJ.i+1)+' / '+KJ.qs.length;
   var tg=ge('KJTAG');
   tg.textContent=lblKai(q.series,q.kai)+'・'+(q.unit||'');
@@ -888,7 +956,9 @@ function kjRender(){
   ge('KJJUDGE').style.display='none';
   ge('KJPAD').style.display='block';
   ge('KJMINE').style.display='none';
-  padSetN(padCount(q.answer));
+  ge('KJRES').style.display='none';ge('KJRES').innerHTML='';ge('KJAUTO').style.display='none';ge('KJTOOLS').style.display='flex';
+  if(KJ.auto){ge('KJSHOW').style.display='none';ge('KJGRADE').style.display='block';ge('KJBOXROW').style.display='none';kjPadSetup(q);}
+  else{ge('KJGRADE').style.display='none';ge('KJBOXROW').style.display='flex';padSetN(padCount(q.answer));}
   try{ge('MAIN').scrollTop=0;}catch(e){}
 }
 function kjShow(){
@@ -1270,6 +1340,505 @@ function upDI(){
   var t='読込済：'+AQ.length+'問 — ';var ps=[];for(var s in by)ps.push(s+':'+by[s]);
   el.textContent=t+ps.join(' / ');
 }
+/* ===== 漢字手書き採点エンジン ===== */
+// 漢字手書き採点エンジン（筆画ベース）
+// 参照: KanjiVG (CC BY-SA 3.0, Ulrich Apel) の筆画データを 109x109 座標で使用
+const KE = (function () {
+  const N = 40;
+  const HANE = new Set(["㇚", "㇟", "㇆", "㇁", "㇂", "㇃", "㇈", "㇉", "㇖", "㇙", "㇌", "㇅"]);
+  const HARAI = new Set(["㇒", "㇏", "㇓", "㇀"]);
+  const TOME_LONG = new Set(["㇐", "㇑", "㇕", "㇗"]);
+  const NAME = { "㇐": "よこ画", "㇑": "たて画", "㇒": "左はらい", "㇏": "右はらい", "㇔": "点", "㇀": "はね上げ", "㇚": "たてはね", "㇟": "まがりはね" };
+
+  const d2 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  const plen = p => { let s = 0; for (let i = 1; i < p.length; i++) s += d2(p[i - 1], p[i]); return s; };
+  function resample(p, n) {
+    if (p.length < 2) return Array.from({ length: n }, () => [p[0][0], p[0][1]]);
+    const L = plen(p);
+    if (L < 1e-6) return Array.from({ length: n }, () => [p[0][0], p[0][1]]);
+    const out = [[p[0][0], p[0][1]]], step = L / (n - 1);
+    let need = step, i = 1, cur = [p[0][0], p[0][1]];
+    while (out.length < n - 1 && i < p.length) {
+      const seg = d2(cur, p[i]);
+      if (seg >= need) {
+        const t = need / seg;
+        cur = [cur[0] + (p[i][0] - cur[0]) * t, cur[1] + (p[i][1] - cur[1]) * t];
+        out.push(cur); need = step;
+      } else { need -= seg; cur = [p[i][0], p[i][1]]; i++; }
+    }
+    while (out.length < n) out.push([p[p.length - 1][0], p[p.length - 1][1]]);
+    return out;
+  }
+  const resampleStep = (p, step) => resample(p, Math.max(2, Math.round(plen(p) / step) + 1));
+  const typ = t => (t || "").charAt(0);
+  const ambiguous = t => (t || "").includes("/");
+
+  function bbox(strokes) {
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (const s of strokes) for (const q of s) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }
+    return { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
+  }
+  const apply = (p, T) => p.map(q => [T.s * q[0] + T.tx, T.s * q[1] + T.ty]);
+
+  // ハンガリアン法（最小コスト割当）
+  function hungarian(C) {
+    const n = C.length, INF = 1e18, u = new Array(n + 1).fill(0), v = new Array(n + 1).fill(0), p = new Array(n + 1).fill(0), way = new Array(n + 1).fill(0);
+    for (let i = 1; i <= n; i++) {
+      p[0] = i; let j0 = 0; const minv = new Array(n + 1).fill(INF), used = new Array(n + 1).fill(false);
+      do {
+        used[j0] = true; const i0 = p[j0]; let delta = INF, j1 = 0;
+        for (let j = 1; j <= n; j++) if (!used[j]) {
+          const cur = C[i0 - 1][j - 1] - u[i0] - v[j];
+          if (cur < minv[j]) { minv[j] = cur; way[j] = j0; }
+          if (minv[j] < delta) { delta = minv[j]; j1 = j; }
+        }
+        for (let j = 0; j <= n; j++) { if (used[j]) { u[p[j]] += delta; v[j] -= delta; } else minv[j] -= delta; }
+        j0 = j1;
+      } while (p[j0] !== 0);
+      do { const j1 = way[j0]; p[j0] = p[j1]; j0 = j1; } while (j0);
+    }
+    const a = new Array(n).fill(-1);
+    for (let j = 1; j <= n; j++) if (p[j]) a[p[j] - 1] = j - 1;
+    return a; // a[row] = col
+  }
+
+  function strokeCost(u, r) {
+    let f = 0, b = 0;
+    for (let i = 0; i < N; i++) { f += d2(u[i], r[i]); b += d2(u[N - 1 - i], r[i]); }
+    return { f: f / N, b: b / N };
+  }
+
+  function match(U, R, MT) {
+    const n = Math.max(U.length, R.length), C = [], raw = [];
+    for (let i = 0; i < n; i++) {
+      C.push([]); raw.push([]);
+      for (let j = 0; j < n; j++) {
+        if (i < U.length && j < R.length) { const c = strokeCost(U[i], R[j]); raw[i][j] = c; C[i][j] = Math.min(c.f, c.b * 1.15); }
+        else C[i][j] = MT;
+      }
+    }
+    const a = hungarian(C), pairs = [];
+    for (let i = 0; i < U.length; i++) {
+      const j = a[i];
+      if (j >= 0 && j < R.length && C[i][j] < MT) pairs.push({ u: i, r: j, cost: C[i][j], f: raw[i][j].f, b: raw[i][j].b });
+    }
+    return pairs;
+  }
+
+  function fitSimilarity(pairs, U, R, prev) {
+    let su = [0, 0], sr = [0, 0], n = 0;
+    const P = [];
+    for (const pr of pairs) {
+      const u = pr.b * 1.15 < pr.f ? U[pr.u].slice().reverse() : U[pr.u], r = R[pr.r];
+      for (let i = 0; i < N; i++) { P.push([u[i], r[i]]); su[0] += u[i][0]; su[1] += u[i][1]; sr[0] += r[i][0]; sr[1] += r[i][1]; n++; }
+    }
+    if (n < N * 2) return prev;
+    su = [su[0] / n, su[1] / n]; sr = [sr[0] / n, sr[1] / n];
+    let num = 0, den = 0;
+    for (const [u, r] of P) { const ux = u[0] - su[0], uy = u[1] - su[1]; num += ux * (r[0] - sr[0]) + uy * (r[1] - sr[1]); den += ux * ux + uy * uy; }
+    const s = den > 0 ? num / den : 1;
+    return { s, tx: sr[0] - s * su[0], ty: sr[1] - s * su[1] };
+  }
+
+  // 最後の「折れ」から先（はね・はらいの先端）を調べる
+  function tailInfo(pts, minAng = 45, maxTail = null) {
+    const p = resampleStep(pts, 1.0), L = plen(p);
+    if (p.length < 6 || L < 6) return { len: 0, ang: 0, L };
+    const W = 3; // 方向を見る窓（単位長）
+    let best = null;
+    for (let k = p.length - 3; k >= W; k--) {
+      const tailLen = (p.length - 1 - k) * 1.0;
+      if (tailLen > (maxTail != null ? maxTail : Math.max(14, L * 0.35))) break;
+      const a = [p[k][0] - p[k - W][0], p[k][1] - p[k - W][1]];
+      const e = Math.min(p.length - 1, k + Math.max(2, Math.min(6, p.length - 1 - k)));
+      const b = [p[e][0] - p[k][0], p[e][1] - p[k][1]];
+      const na = Math.hypot(...a), nb = Math.hypot(...b);
+      if (na < 1e-6 || nb < 1e-6) continue;
+      const ang = Math.acos(Math.max(-1, Math.min(1, (a[0] * b[0] + a[1] * b[1]) / (na * nb)))) * 180 / Math.PI;
+      if (ang >= minAng) { best = { len: tailLen, ang, L }; break; }
+    }
+    return best || { len: 0, ang: 0, L };
+  }
+
+  // 終点から h だけ手前の点で、先端の向きと手前の向きのなす角（はねの強さ）
+  function pointAt(p, dist) {
+    let acc = 0;
+    for (let i = 1; i < p.length; i++) { const seg = d2(p[i - 1], p[i]); if (acc + seg >= dist) { const t = seg ? (dist - acc) / seg : 0; return [p[i - 1][0] + (p[i][0] - p[i - 1][0]) * t, p[i - 1][1] + (p[i][1] - p[i - 1][1]) * t]; } acc += seg; }
+    return p[p.length - 1];
+  }
+  function hookAngle(pts, h) {
+    const L = plen(pts);
+    if (L < h + 6) return 0;
+    const E = pts[pts.length - 1], P1 = pointAt(pts, L - h), P2 = pointAt(pts, Math.max(0, L - h - 10));
+    const v = [E[0] - P1[0], E[1] - P1[1]], b = [P1[0] - P2[0], P1[1] - P2[1]];
+    const nv = Math.hypot(...v), nb = Math.hypot(...b);
+    if (nv < 1e-6 || nb < 1e-6) return 0;
+    return Math.acos(Math.max(-1, Math.min(1, (v[0] * b[0] + v[1] * b[1]) / (nv * nb)))) * 180 / Math.PI;
+  }
+  function nearestOnPoly(q, poly) {
+    let bd = 1e9, bi = 0, acc = 0, bacc = 0;
+    for (let i = 1; i < poly.length; i++) {
+      const a = poly[i - 1], b = poly[i], vx = b[0] - a[0], vy = b[1] - a[1], ll = vx * vx + vy * vy;
+      let t = ll > 0 ? ((q[0] - a[0]) * vx + (q[1] - a[1]) * vy) / ll : 0; t = Math.max(0, Math.min(1, t));
+      const x = a[0] + vx * t, y = a[1] + vy * t, dd = Math.hypot(q[0] - x, q[1] - y), seg = Math.sqrt(ll);
+      if (dd < bd) { bd = dd; bacc = acc + seg * t; }
+      acc += seg;
+    }
+    return { d: bd, at: bacc, L: acc };
+  }
+  function segX(p1, p2, q1, q2) {
+    const r = [p2[0] - p1[0], p2[1] - p1[1]], s = [q2[0] - q1[0], q2[1] - q1[1]], den = r[0] * s[1] - r[1] * s[0];
+    if (Math.abs(den) < 1e-9) return null;
+    const t = ((q1[0] - p1[0]) * s[1] - (q1[1] - p1[1]) * s[0]) / den, u = ((q1[0] - p1[0]) * r[1] - (q1[1] - p1[1]) * r[0]) / den;
+    return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? t : null;
+  }
+  // 端点 which(0=始点,1=終点) が相手の線 B をどれだけ越えているか（正=つき出し、負=すき間）
+  function protrusion(A, B, which) {
+    const a = which ? A.slice().reverse() : A;
+    const E = a[0];
+    let acc = 0;
+    for (let i = 1; i < a.length && acc < 22; i++) {
+      for (let j = 1; j < B.length; j++) {
+        const t = segX(a[i - 1], a[i], B[j - 1], B[j]);
+        if (t !== null) return { p: acc + d2(a[i - 1], a[i]) * t, near: nearestOnPoly(a[0], B) };
+      }
+      acc += d2(a[i - 1], a[i]);
+    }
+    const nr = nearestOnPoly(E, B);
+    return { p: -nr.d, near: nr };
+  }
+  function junctions(R, types) {
+    const J = [];
+    for (let a = 0; a < R.length; a++) for (let b = 0; b < R.length; b++) {
+      if (a === b) continue;
+      const ta = types ? typ(types[a]) : "㇐";
+      if (ta !== "㇐" && ta !== "㇑") continue; // つき出しが問われるのは横画・縦画の端
+      for (const w of [0, 1]) {
+        const pr = protrusion(R[a], R[b], w);
+        if (pr.p < -7 || pr.p > 14) continue;
+        const nb = nearestOnPoly(R[a][w ? R[a].length - 1 : 0], R[b]);
+        if (nb.at < 4 || nb.L - nb.at < 4) continue; // 角（L字）の接続は対象外
+        J.push({ a, b, w, p: pr.p });
+      }
+    }
+    return J;
+  }
+
+  function speedEnd(raw) {
+    // raw: [[x,y,t],...] ref座標系
+    // 指を離した瞬間の「同じ位置・少し後の時刻」の点は、止めたのではないので除く（35ms未満の静止）
+    raw = raw.slice();
+    while (raw.length > 2) {
+      const a = raw[raw.length - 2], b = raw[raw.length - 1];
+      if (d2(a, b) < 0.6 && b[2] - a[2] < 35) raw.pop(); else break;
+    }
+    if (raw.length < 4) return null;
+    const T = raw[raw.length - 1][2] - raw[0][2];
+    if (T <= 0) return null;
+    const L = plen(raw);
+    const avg = L / T;
+    const tEnd = raw[raw.length - 1][2];
+    let i = raw.length - 1;
+    while (i > 0 && tEnd - raw[i][2] < 40) i--;
+    const dt = tEnd - raw[i][2];
+    if (dt <= 0) return null;
+    const endV = plen(raw.slice(i)) / dt;
+    return avg > 0 ? endV / avg : null;
+  }
+
+  const LEVELS = {
+    test: { MT: 20, POS: 12, LEN: [0.74, 1.32], LENABS: 7, PUSH: 7, PGAP: -1.5, HOOKANG: 28, HOOKMIN: 2.0, EXTRAHOOK: 6.5, STOP: 0.28, FLICK: 1.45 },
+    normal: { MT: 24, POS: 16, LEN: [0.66, 1.45], LENABS: 10, PUSH: 9, PGAP: -3, HOOKANG: 22, HOOKMIN: 1.6, EXTRAHOOK: 8, STOP: 0.2, FLICK: 1.8 },
+  };
+
+  // ref: [{t,p:[[x,y]...]}], user: [[[x,y,t],...],...] (ボックス座標、左上原点)
+  function grade(ref, user, opt = {}) {
+    const LV = LEVELS[opt.level || "test"], LN = LEVELS.normal, checkSpeed = opt.speed !== false;
+    const RX = opt.relax || {}; // 学習でゆるめた画 {"画番号:種類":1}
+    const issues = [];
+    const R = ref.map(s => resample(s.p, N));
+    const Rfine = ref.map(s => resampleStep(s.p, 1));
+    const Ux = user.filter(s => s.length >= 1);
+    if (!Ux.length) return { ok: false, issues: [{ k: "empty", msg: "まだ書いていません" }], pairs: [], T: null };
+    const rb = bbox(R), ub = bbox(Ux.map(s => s.map(q => [q[0], q[1]])));
+    const s0 = Math.max(rb.w, rb.h) / Math.max(ub.w, ub.h, 1e-3);
+    let T = { s: s0, tx: rb.cx - s0 * ub.cx, ty: rb.cy - s0 * ub.cy };
+    let U = [], pairs = [];
+    for (let it = 0; it < 3; it++) {
+      U = Ux.map(s => resample(apply(s, T), N));
+      pairs = match(U, R, LV.MT * (it === 0 ? 1.6 : 1));
+      T = fitSimilarity(pairs, Ux.map(s => resample(s, N)), R, T);
+    }
+    U = Ux.map(s => resample(apply(s, T), N));
+    pairs = match(U, R, LV.MT);
+    const Ufine = Ux.map(s => resampleStep(apply(s, T), 1));
+    const Uraw = Ux.map(s => apply(s, T).map((q, i) => [q[0], q[1], s[i][2] || 0]));
+
+    const matchedR = new Set(pairs.map(p => p.r)), matchedU = new Set(pairs.map(p => p.u));
+    const strokeIssues = {}; // ref index -> [msgs]
+    const addS = (r, k, msg) => { (strokeIssues[r] = strokeIssues[r] || []).push(k); issues.push({ k, r, msg }); };
+
+    // 1) 画数
+    if (Ux.length !== R.length) issues.push({ k: "count", msg: `画数がちがいます（正しくは${R.length}画、書いたのは${Ux.length}画）` });
+    for (let j = 0; j < R.length; j++) if (!matchedR.has(j)) addS(j, "missing", `${j + 1}画目（${NAME[typ(ref[j].t)] || "線"}）が書けていないか、形・位置が大きくちがいます`);
+    for (let i = 0; i < Ux.length; i++) if (!matchedU.has(i)) issues.push({ k: "extra", u: i, msg: `あなたの${i + 1}画目は、どの画にもあてはまりません` });
+
+    // 2) 書き順（最長増加部分列にのらない画）
+    const seq = pairs.slice().sort((a, b) => a.u - b.u).map(p => p.r);
+    const lis = (() => { const n = seq.length, len = new Array(n).fill(1), prv = new Array(n).fill(-1); let best = 0;
+      for (let i = 0; i < n; i++) { for (let j = 0; j < i; j++) if (seq[j] < seq[i] && len[j] + 1 > len[i]) { len[i] = len[j] + 1; prv[i] = j; } if (len[i] > len[best]) best = i; }
+      const keep = new Set(); let k = n ? best : -1; while (k >= 0) { keep.add(seq[k]); k = prv[k]; } return keep; })();
+    const wrongOrder = seq.filter(r => !lis.has(r));
+    if (wrongOrder.length && !opt.noOrder) for (const r of wrongOrder) {
+      const pr = pairs.find(p => p.r === r);
+      addS(r, "order", `書き順がちがいます：${r + 1}画目を${pr.u + 1}番目に書いています`);
+    }
+
+    // 3) 向き・位置・長さ
+    for (const pr of pairs) {
+      const rev = pr.b * 1.15 < pr.f && pr.f - pr.b > 3;
+      const u = rev ? U[pr.u].slice().reverse() : U[pr.u], r = R[pr.r];
+      if (rev) addS(pr.r, "dir", `${pr.r + 1}画目：書く向きが逆です`);
+      const tt = typ(ref[pr.r].t);
+      if (tt === "㇔") continue; // 点は長さ判定しない
+      const ds = d2(u[0], r[0]), de = d2(u[N - 1], r[N - 1]);
+      const lu = plen(U[pr.u]), lr = plen(r), ratio = lu / Math.max(lr, 1e-6);
+      const LL = RX[pr.r + ":len"] ? LN : LV;
+      if ((ratio < LL.LEN[0] || ratio > LL.LEN[1]) && Math.abs(lu - lr) > LL.LENABS)
+        addS(pr.r, "len", `${pr.r + 1}画目：${ratio < 1 ? "短すぎます" : "長すぎます"}`);
+      else if (Math.max(ds, de) > (RX[pr.r + ":pos"] ? LN : LV).POS)
+        addS(pr.r, "pos", `${pr.r + 1}画目：${ds > de ? "書きはじめ" : "書きおわり"}の位置がずれています`);
+    }
+
+    // 4) 平行な画の長短関係（未/末・土/士 のたぐい）
+    for (let a = 0; a < R.length; a++) for (let b = a + 1; b < R.length; b++) {
+      const ta = typ(ref[a].t), tb = typ(ref[b].t);
+      if (!(ta === tb && (ta === "㇐" || ta === "㇑"))) continue;
+      const pa = pairs.find(p => p.r === a), pb = pairs.find(p => p.r === b);
+      if (!pa || !pb) continue;
+      const la = plen(R[a]), lb = plen(R[b]);
+      const big = la / lb;
+      if (big < 1.3 && big > 1 / 1.3) continue;
+      const ua = plen(U[pa.u]), ub2 = plen(U[pb.u]);
+      if ((la > lb) !== (ua > ub2) && Math.abs(ua - ub2) > (RX[a + ":rel"] || RX[b + ":rel"] ? 8 : 3))
+        issues.push({ k: "rel", r: a, msg: `${a + 1}画目と${b + 1}画目の長さの関係が逆です（${la > lb ? a + 1 : b + 1}画目のほうが長い）` }),
+        (strokeIssues[a] = strokeIssues[a] || []).push("rel"), (strokeIssues[b] = strokeIssues[b] || []).push("rel");
+    }
+
+    // 5) つき出す・つき出さない
+    const J = ref._J || (ref._J = junctions(Rfine, ref.map(s => s.t)));
+    const seen = new Set();
+    for (const j of J) {
+      const pa = pairs.find(p => p.r === j.a), pb = pairs.find(p => p.r === j.b);
+      if (!pa || !pb) continue;
+      const rev = pa.b * 1.15 < pa.f && pa.f - pa.b > 3;
+      const A = rev ? Ufine[pa.u].slice().reverse() : Ufine[pa.u];
+      const up = protrusion(A, Ufine[pb.u], j.w).p;
+      const key = j.a + "-" + j.w;
+      if (seen.has(key)) continue;
+      const LP = RX[j.a + ":push"] ? LN : LV;
+      if (j.p <= 1 && up >= LP.PUSH) { seen.add(key); addS(j.a, "push", `${j.a + 1}画目：${j.b + 1}画目からつき出ています（つき出さない）`); }
+      else if (j.p >= 5 && up <= LP.PGAP) { seen.add(key); addS(j.a, "push", `${j.a + 1}画目：${j.b + 1}画目までとどいていません（つき出す）`); }
+    }
+
+    // 6) はね・とめ・はらい
+    for (const pr of pairs) {
+      const t = ref[pr.r].t || "", tt = typ(t);
+      if (ambiguous(t)) continue;
+      const rev = pr.b * 1.15 < pr.f && pr.f - pr.b > 3;
+      if (rev) continue;
+      const rt = tailInfo(Rfine[pr.r]), ut = tailInfo(Ufine[pr.u]), uh = tailInfo(Ufine[pr.u], 30, Math.max(8, rt.len * 2.2 + 3));
+      if (HANE.has(tt)) {
+        const h = rt.len > 0 ? Math.max(3, Math.min(10, rt.len)) : 6, Aref = hookAngle(Rfine[pr.r], h);
+        if (Aref >= 30) {
+          const Au = Math.max(hookAngle(Ufine[pr.u], h), hookAngle(Ufine[pr.u], h * 0.6), hookAngle(Ufine[pr.u], h * 1.4));
+          const LH = RX[pr.r + ":hane"] ? LN : LV;
+          if (Au < Math.max(LH.HOOKANG, Aref * (RX[pr.r + ":hane"] ? 0.35 : 0.45))) addS(pr.r, "hane", `${pr.r + 1}画目：はねていません（はねる）`);
+        }
+      }
+      if (!HANE.has(tt) && !HARAI.has(tt) && tt !== "㇔" && rt.len < 3 && ut.len >= (RX[pr.r + ":hane"] ? LN : LV).EXTRAHOOK && ut.ang >= 70 && ut.len <= ut.L * 0.35)
+        addS(pr.r, "hane", `${pr.r + 1}画目：はねています（はねない）`);
+      if (checkSpeed) {
+        const ratio = speedEnd(Uraw[pr.u]);
+        if (ratio != null) {
+          if (HARAI.has(tt) && ratio < (RX[pr.r + ":harai"] ? LN : LV).STOP) addS(pr.r, "harai", `${pr.r + 1}画目：はらわずに止めています（はらう）`);
+        }
+      }
+    }
+    return { ok: issues.length === 0, issues, pairs, T, strokeIssues };
+  }
+  return { grade, resample, plen, tailInfo, hookAngle, junctions, NAME, LEVELS };
+})();
+
+
+/* ===== 書き取り自動採点（筆画ベース）＋保護者の訂正による学習 ===== */
+var KS=null, KSL=false, KSERR=false;          // 筆順データ（KanjiVG）
+var KG={on:true,level:'test'};                // 自動採点の設定（端末共通）
+var LRN={c:{},rx:{},no:{},rep:[]};            // 学習内容（学習者ごと）
+function kgLoadCfg(){try{var s=localStorage.getItem('jkg3');if(s){var o=JSON.parse(s);if(typeof o.on==='boolean')KG.on=o.on;if(o.level==='normal'||o.level==='test')KG.level=o.level;}}catch(e){}}
+function kgSaveCfg(){try{localStorage.setItem('jkg3',JSON.stringify(KG));}catch(e){}}
+function lrnLoad(){try{var s=localStorage.getItem('jkl3_'+PROF);LRN=s?JSON.parse(s):null;}catch(e){LRN=null;}if(!LRN||typeof LRN!=='object')LRN={};LRN.c=LRN.c||{};LRN.rx=LRN.rx||{};LRN.no=LRN.no||{};LRN.rep=LRN.rep||[];}
+function lrnSave(){try{localStorage.setItem('jkl3_'+PROF,JSON.stringify(LRN));}catch(e){}}
+function kgHash(s){var h=5381;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return 'p'+(h>>>0).toString(36);}
+function kgPinSet(){try{return !!localStorage.getItem('jpin3');}catch(e){return false;}}
+
+function ksLoad(cb){
+  if(KS){cb();return;}
+  if(KSL){setTimeout(function(){ksLoad(cb);},150);return;}
+  KSL=true;
+  fetch('kanjistroke.json').then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}).then(function(d){
+    KS={};
+    for(var c in d){var st=d[c],out=[];for(var i=0;i<st.length;i++){var f=st[i][1],p=[];for(var j=0;j<f.length;j+=2)p.push([f[j]/2,f[j+1]/2]);out.push({t:st[i][0],p:p});}KS[c]=out;}
+    KSL=false;cb();
+  }).catch(function(){KS={};KSERR=true;KSL=false;cb();});
+}
+function kjAns(q){return String(q.answer||'').replace(/^[\s　]+|[\s　]+$/g,'');}
+function kjGradable(q){
+  if(!KG.on||!KS||KSERR)return false;
+  var a=kjAns(q);
+  if(!/^[぀-ゟ゠-ヿ一-鿿々]{1,6}$/.test(a))return false;
+  if(!/[一-鿿々]/.test(a))return false;      /* 読み問題（かなだけ）は自己採点 */
+  var pr=q.pr||'';
+  for(var i=0;i<a.length;i++){var c=a.charAt(i);if(pr.indexOf(c)>=0)continue;if(!KS[c])return false;}
+  return true;
+}
+
+/* 採点結果をマスに描く：お手本（うすく）・書いた線（○緑／×朱）・書き順の番号 */
+function kgDraw(b){
+  var R=b.res,ref=KS[b.ch],c=b.ctx,s=b.size;padGrid(b);
+  if(!R||!R.T){padRedraw(b);return;}
+  var T=R.T,f=function(q){return [(q[0]-T.tx)/T.s,(q[1]-T.ty)/T.s];};
+  var pen=Math.max(3,s/22),bad={},used={},byU={};
+  for(var k in (R.strokeIssues||{}))bad[k]=1;
+  for(var i=0;i<R.pairs.length;i++){used[R.pairs[i].r]=1;byU[R.pairs[i].u]=R.pairs[i].r;}
+  function line(p,col,w,dash){if(!p.length)return;c.save();c.strokeStyle=col;c.fillStyle=col;c.lineWidth=w;c.lineCap='round';c.lineJoin='round';if(dash)c.setLineDash(dash);c.beginPath();c.moveTo(p[0][0],p[0][1]);if(p.length===1)c.lineTo(p[0][0]+.1,p[0][1]+.1);for(var j=1;j<p.length;j++)c.lineTo(p[j][0],p[j][1]);c.stroke();c.restore();}
+  for(var j=0;j<ref.length;j++){var mp=ref[j].p.map(f);line(mp,used[j]?'#d9d6cc':'#c0392b',pen*1.2,used[j]?null:[5,5]);}
+  for(var u=0;u<b.strokes.length;u++){var st=b.strokes[u],pts=[];for(var m=0;m<st.length;m++)pts.push([st[m].x,st[m].y]);var r=byU[u];line(pts,(r==null||bad[r])?'#c0392b':'#1e7a3c',pen*0.75);}
+  c.save();c.font='700 '+Math.max(10,Math.round(s*0.075))+'px -apple-system,sans-serif';c.textAlign='center';c.textBaseline='middle';
+  for(var j2=0;j2<ref.length;j2++){var p0=f(ref[j2].p[0]),isb=bad[j2]||!used[j2];c.globalAlpha=.85;c.fillStyle='#fff';c.beginPath();c.arc(p0[0],p0[1],s*0.05,0,Math.PI*2);c.fill();c.globalAlpha=1;c.fillStyle=isb?'#c0392b':'#8a877e';c.fillText(String(j2+1),p0[0],p0[1]);}
+  c.restore();
+}
+function kgFixedDraw(b){padGrid(b);var c=b.ctx,s=b.size;c.save();c.fillStyle='#8a877e';c.font=Math.round(s*0.68)+'px "Hiragino Mincho ProN","Yu Mincho",serif';c.textAlign='center';c.textBaseline='middle';c.fillText(b.ch,s/2,s/2+s*0.03);c.restore();}
+
+function kjGrade(){
+  var q=KJ.qs[KJ.i];if(!q)return;
+  var empty=false;for(var i=0;i<PAD.boxes.length;i++){var b=PAD.boxes[i];if(!b.fixed&&!b.strokes.length)empty=true;}
+  if(empty){ge('KJRES').style.display='block';ge('KJRES').innerHTML='<div class="kgv ng">まだ書いていないマスがあります。</div>';return;}
+  var all=true,items=[];
+  for(var i2=0;i2<PAD.boxes.length;i2++){
+    var bx=PAD.boxes[i2];if(bx.fixed)continue;
+    var us=[];for(var s=0;s<bx.strokes.length;s++){var st=bx.strokes[s],p=[];for(var m=0;m<st.length;m++)p.push([st[m].x,st[m].y,st[m].t||0]);us.push(p);}
+    bx.res=KE.grade(KS[bx.ch],us,{level:KG.level,relax:LRN.rx[bx.ch]||{},noOrder:!!LRN.no[bx.ch]});
+    bx.locked=true;kgDraw(bx);
+    if(!bx.res.ok){all=false;for(var k=0;k<bx.res.issues.length;k++)items.push('<li><b>'+bx.ch+'</b> '+bx.res.issues[k].msg+'</li>');}
+  }
+  if(KJ.graded==null)KJ.graded=all;       /* 記録するのは1回目の結果 */
+  KJ.cur=all;                             /* 今回の採点結果（訂正メニュー用） */
+  KJ.shown=true;KJ.fix=null;
+  kjShowGraded(all,items);
+}
+function kjShowGraded(all,items){
+  var r=ge('KJRES');r.style.display='block';
+  var note=all?'<div class="kgv ok"><div class="kgh">○ 正解</div>画数・書き順・向き・長さ・つき出し・はね・はらいまで合格。<br>とめの形（先を細くしない）は、下のこたえと見くらべてください。</div>'
+    :'<div class="kgv ng"><div class="kgh">× なおすところ</div><ul>'+items.join('')+'</ul><div class="kgn">朱の線＝まちがえた画／うすい線＝お手本／点線＝書けていない画。数字は正しい書き順です。</div></div>';
+  if(KJ.fix)note+='<div class="kgv fix">'+KJ.fix+'</div>';
+  r.innerHTML=note;
+  ge('KJTOOLS').style.display='none';ge('KJBOXROW').style.display='none';
+  ge('KJANS').style.display='block';ge('KJGRADE').style.display='none';ge('KJSHOW').style.display='none';
+  ge('KJAUTO').style.display='flex';
+  var nb=ge('KJNEXT');nb.textContent=(KJ.i+1<KJ.qs.length)?'つぎへ':'結果を見る';
+  nb.className=(KJ.graded?'ckbtn':'ckbtn kgng');
+}
+function kjRetry(){var keep=KJ.graded,fix=KJ.fixed;kjRender();KJ.graded=keep;KJ.fixed=fix;}
+
+/* ---- 保護者の暗証番号 ---- */
+function kgPin(title,cb){
+  var set=kgPinSet(),ov=ge('KGPIN');
+  ge('KGPINT').textContent=set?title:'保護者の暗証番号（4けた）を決めてください';
+  ge('KGPINS').textContent=set?'判定をなおすには暗証番号が必要です。':'判定をなおすボタンは、この番号を知っている人だけが使えます。';
+  var inp=ge('KGPINI');inp.value='';ge('KGPINE').textContent='';ov.style.display='flex';
+  var step=set?'ask':'new',first='';
+  setTimeout(function(){try{inp.focus();}catch(e){}},50);
+  ge('KGPINOK').onclick=function(){
+    var v=inp.value.replace(/\D/g,'');
+    if(v.length!==4){ge('KGPINE').textContent='4けたの数字を入れてください';return;}
+    if(step==='ask'){var h='';try{h=localStorage.getItem('jpin3');}catch(e){}if(kgHash(v)!==h){ge('KGPINE').textContent='番号がちがいます';inp.value='';return;}ov.style.display='none';cb();}
+    else if(step==='new'){first=v;step='again';inp.value='';ge('KGPINS').textContent='確認のため、もう一度入れてください。';}
+    else{if(v!==first){ge('KGPINE').textContent='1回目とちがいます。はじめからやり直してください';step='new';first='';inp.value='';return;}
+      try{localStorage.setItem('jpin3',kgHash(v));}catch(e){}ov.style.display='none';cb();}
+  };
+  ge('KGPINX').onclick=function(){ov.style.display='none';};
+}
+function kgChangePin(){
+  if(!kgPinSet()){kgPin('',function(){alert('暗証番号を設定しました');kgRenderCfg();});return;}
+  kgPin('いまの暗証番号を入れてください',function(){try{localStorage.removeItem('jpin3');}catch(e){}kgPin('',function(){alert('暗証番号を変更しました');kgRenderCfg();});});
+}
+
+/* ---- 判定をなおす（学習） ---- */
+var KG_RELAX=['pos','len','rel','push','hane','harai'];
+function kjFixOpen(){kgPin('保護者の暗証番号を入れてください',kjFixMenu);}
+function kjFixMenu(){
+  var q=KJ.qs[KJ.i],hasOrder=false,hasRelax=false,hasHard=false;
+  for(var i=0;i<PAD.boxes.length;i++){var b=PAD.boxes[i];if(!b.res)continue;for(var k=0;k<b.res.issues.length;k++){var t=b.res.issues[k].k;if(t==='order')hasOrder=true;else if(KG_RELAX.indexOf(t)>=0)hasRelax=true;else hasHard=true;}}
+  var h='<div class="kgmt">判定をなおす（保護者）</div>';
+  if(KJ.cur!==true)h+='<button class="kgmb ok" data-a="ok">本当は○（この書き方で正しい）</button>';
+  if(KJ.cur!==false){h+='<button class="kgmb ng" data-a="ng-tome">本当は×：とめ・はらいがちがう</button>';h+='<button class="kgmb ng" data-a="ng-shape">本当は×：形・長さ・位置がちがう</button>';}
+  if(hasOrder)h+='<button class="kgmb" data-a="order">この字の書き順は判定しない（お手本が教科書とちがう）</button>';
+  if(KJ.cur===false&&hasHard&&!hasRelax&&!hasOrder)h+='<div class="kgms">画数・書き順・書く向きのまちがいは学習しません（○に変えても、次も同じ判定になります）。</div>';
+  h+='<button class="kgmb" data-a="x">やめる</button>';
+  var m=ge('KGMENU');m.innerHTML='<div class="kgmc">'+h+'</div>';m.style.display='flex';
+  var bs=m.querySelectorAll('button');for(var j=0;j<bs.length;j++)bs[j].onclick=function(){m.style.display='none';kjFixApply(this.getAttribute('data-a'));};
+}
+function kjFixApply(a){
+  if(a==='x')return;
+  var q=KJ.qs[KJ.i],msg=[],rep={t:new Date().toISOString(),q:q.id,ans:kjAns(q),a:a,lv:KG.level,ch:[]};
+  for(var i=0;i<PAD.boxes.length;i++){var b=PAD.boxes[i];if(b.fixed||!b.res)continue;
+    rep.ch.push({c:b.ch,is:b.res.issues.map(function(x){return x.k+(x.r!=null?':'+(x.r+1):'');}),s:b.strokes.map(function(st){return st.map(function(p){return [Math.round(p.x),Math.round(p.y),Math.round(p.t||0)];});})});}
+  if(a==='ok'){
+    var learned=[],pending=[];
+    for(var i2=0;i2<PAD.boxes.length;i2++){var b2=PAD.boxes[i2];if(b2.fixed||!b2.res)continue;
+      for(var k=0;k<b2.res.issues.length;k++){var is=b2.res.issues[k];if(KG_RELAX.indexOf(is.k)<0||is.r==null)continue;
+        var key=b2.ch+'|'+is.r+':'+is.k;LRN.c[key]=(LRN.c[key]||0)+1;
+        if(LRN.c[key]>=2){LRN.rx[b2.ch]=LRN.rx[b2.ch]||{};if(!LRN.rx[b2.ch][is.r+':'+is.k]){LRN.rx[b2.ch][is.r+':'+is.k]=1;learned.push('「'+b2.ch+'」'+(is.r+1)+'画目');}}
+        else pending.push('「'+b2.ch+'」'+(is.r+1)+'画目');}}
+    KJ.graded=true;
+    msg.push('保護者が○に変更しました。');
+    if(learned.length)msg.push(learned.join('・')+'の判定を「ふつう」までゆるめました。');
+    if(pending.length)msg.push(pending.join('・')+'は、あと1回同じ訂正があれば判定をゆるめます。');
+  }else if(a==='ng-tome'||a==='ng-shape'){
+    KJ.graded=false;msg.push('保護者が×に変更しました。「まちがえた問題」に入ります。');
+    if(a==='ng-shape'){var reset=[];for(var i3=0;i3<PAD.boxes.length;i3++){var c3=PAD.boxes[i3].ch;if(LRN.rx[c3]){delete LRN.rx[c3];reset.push('「'+c3+'」');}for(var kk in LRN.c)if(kk.indexOf(c3+'|')===0)delete LRN.c[kk];}
+      if(reset.length)msg.push(reset.join('')+'でゆるめていた判定を元にもどしました。');}
+    else msg.push('とめ・はらいの形は機械では見分けられないので、判定は変えずに記録だけします。');
+  }else if(a==='order'){
+    for(var i4=0;i4<PAD.boxes.length;i4++){var b4=PAD.boxes[i4];if(b4.res&&b4.res.issues.some(function(x){return x.k==='order';})){LRN.no[b4.ch]=1;msg.push('「'+b4.ch+'」は書き順を判定しないようにしました（設定画面で元にもどせます）。');}}
+  }
+  LRN.rep.push(rep);if(LRN.rep.length>40)LRN.rep=LRN.rep.slice(-40);
+  lrnSave();KJ.fix=msg.join('<br>');KJ.fixed=true;
+  var items=[];for(var i5=0;i5<PAD.boxes.length;i5++){var b5=PAD.boxes[i5];if(b5.res&&!b5.res.ok)for(var k5=0;k5<b5.res.issues.length;k5++)items.push('<li><b>'+b5.ch+'</b> '+b5.res.issues[k5].msg+'</li>');}
+  kjShowGraded(KJ.graded,items);
+}
+
+/* ---- 設定画面 ---- */
+function kgRenderCfg(){
+  var el=ge('KGCFG');if(!el)return;
+  ge('KGON').value=KG.on?'1':'0';ge('KGLV').value=KG.level;
+  var n=0;for(var c in LRN.rx)for(var k in LRN.rx[c])n++;
+  var p=0;for(var k2 in LRN.c)if(LRN.c[k2]===1)p++;
+  var no=[];for(var c2 in LRN.no)no.push(c2);
+  ge('KGSUM').innerHTML='学習者'+PROF+'：ゆるめた画 <b>'+n+'</b>件（あと1回で反映 '+p+'件）<br>書き順を判定しない字：'+(no.length?no.join(' ')+' <button class="kglk" id="KGNOCLR" type="button">元にもどす</button>':'なし')+'<br>保護者の暗証番号：'+(kgPinSet()?'設定ずみ':'未設定（最初に判定をなおすときに決めます）');
+  var nb=ge('KGNOCLR');if(nb)nb.onclick=function(){kgPin('暗証番号を入れてください',function(){LRN.no={};lrnSave();kgRenderCfg();});};
+  ge('KGREP').value=LRN.rep.length?JSON.stringify(LRN.rep):'';
+}
+function kgBindCfg(){
+  if(!ge('KGCFG'))return;
+  ge('KGON').addEventListener('change',function(){KG.on=this.value==='1';kgSaveCfg();});
+  ge('KGLV').addEventListener('change',function(){KG.level=this.value==='normal'?'normal':'test';kgSaveCfg();});
+  ge('KGPINBTN').addEventListener('click',function(){kgChangePin();});
+  ge('KGRESET').addEventListener('click',function(){kgPin('暗証番号を入れてください',function(){if(!confirm('学習者'+PROF+'の「ゆるめた判定」をすべて元にもどしますか？'))return;LRN.c={};LRN.rx={};lrnSave();kgRenderCfg();});});
+  ge('KGREPCLR').addEventListener('click',function(){if(!confirm('判定ミスの記録を消しますか？'))return;LRN.rep=[];lrnSave();kgRenderCfg();});
+}
+
 function rstA(){
   if(!confirm('学習者'+PROF+'の成績・×リスト・間違えた問題の履歴をリセットしますか？（もう一方の学習者には影響しません）'))return;
   ST2=freshST();HS=[];WR={};EW={};svS();svH();svW();svEW();upST();bK();upMC();alert('リセットしました');
