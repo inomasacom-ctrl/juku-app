@@ -102,6 +102,8 @@ select:disabled{opacity:.4}
 .kgmt{font-weight:700;font-size:15px;margin-bottom:2px}.kgms{font-size:12px;color:var(--mt);line-height:1.6}
 .kgmb{border:1.5px solid var(--b2);background:var(--card);color:var(--tx);border-radius:8px;padding:11px 12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left}
 .kgmb.ok{border-color:var(--gn);color:var(--gntx);background:var(--gnbg)}.kgmb.ng{border-color:var(--rd);color:var(--rdtx);background:var(--rdbg)}
+#PG5{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#PG5 canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
 #KGPINI{font-size:26px;letter-spacing:.5em;text-align:center;padding:8px;border:1.5px solid var(--b2);border-radius:8px;width:100%;font-family:inherit}
 </style>
 </head>
@@ -353,6 +355,9 @@ select:disabled{opacity:.4}
         <div class="fg"><label>自動採点</label><select id="KGON"><option value="1">使う</option><option value="0">使わない（自分で○×）</option></select></div>
         <div class="fg"><label>判定の厳しさ</label><select id="KGLV"><option value="test">テスト基準</option><option value="normal">ふつう</option></select></div>
       </div>
+      <div class="fr">
+        <div class="fg"><label>手をついたときの反応（手のひら対策）</label><select id="KGPEN"><option value="auto">自動（ペンを使ったら指・手のひらを無視）</option><option value="pen">ペンだけで書く</option><option value="touch">指でも書く（ペンを使わない）</option></select></div>
+      </div>
       <div id="KGSUM" style="font-size:12px;color:var(--mt);line-height:1.8;margin-bottom:8px"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
         <button class="htbtn" id="KGPINBTN" type="button" style="flex:1">暗証番号を設定・変更</button>
@@ -453,6 +458,9 @@ document.addEventListener('DOMContentLoaded',function(){
   ge('KJNEXT').addEventListener('click',function(){kjNext(KJ.graded===true);});
   ge('KJRETRY').addEventListener('click',function(){kjRetry();});
   ge('KJFIX').addEventListener('click',function(){kjFixOpen();});
+  /* ペンで書いている最中は、手のひらでページが動かないようにする */
+  document.addEventListener('touchmove',function(e){if(PAD.pen&&PAD.pen.cur&&PAD.pen.ptype==='pen')e.preventDefault();},{passive:false});
+  ge('KJPAD').addEventListener('touchstart',function(e){var t=e.target;while(t&&t!==this){if(t.tagName==='BUTTON')return;t=t.parentNode;}if(kgPenOnly())e.preventDefault();},{passive:false});
   ge('KJCLR').addEventListener('click',function(){padClear();});
   ge('KJUNDO').addEventListener('click',function(){padUndo();});
   (function(){
@@ -705,19 +713,28 @@ function padPos(b,e){
 function padBind(b){
   function down(e){
     if(b.locked||b.fixed)return;
+    var pt=e.pointerType||'';
+    if(pt==='pen')kgPenSeen();
+    if(pt==='touch'&&kgPenOnly()){e.preventDefault();return;}   /* ペンで書くときは、手のひら・指のタッチを無視 */
     e.preventDefault();
-    if(PAD.pen===b&&b.cur)return;
+    if(PAD.pen&&PAD.pen.cur){
+      /* 手のひらが先に触れて線が始まっていたら、ペンが来た時点でその線を捨てる */
+      if(pt==='pen'&&PAD.pen.ptype!=='pen'){var ob=PAD.pen;ob.strokes.pop();ob.cur=null;PAD.pen=null;padRedraw(ob);}
+      else return;
+    }
     try{if(e.pointerId!=null&&b.cv.setPointerCapture)b.cv.setPointerCapture(e.pointerId);}catch(x){}
+    b.pid=e.pointerId;b.ptype=pt;
     b.cur=[padPos(b,e)]; b.strokes.push(b.cur); PAD.pen=b; padRedraw(b);
   }
   function move(e){
     if(PAD.pen!==b||!b.cur)return;
+    if(e.pointerId!=null&&b.pid!=null&&e.pointerId!==b.pid)return;  /* 書いている指・ペン以外の動きは無視 */
     e.preventDefault();
     var evs=(e.getCoalescedEvents&&e.getCoalescedEvents())||[];
     if(evs.length){for(var k=0;k<evs.length;k++)b.cur.push(padPos(b,evs[k]));}else b.cur.push(padPos(b,e));
     padRedraw(b);
   }
-  function up(e){ if(PAD.pen===b){ if(b.cur&&e&&e.clientX!=null){var q=padPos(b,e),l=b.cur[b.cur.length-1];if(!l||Math.abs(q.x-l.x)+Math.abs(q.y-l.y)>1)b.cur.push(q);} b.cur=null;PAD.pen=null;} }
+  function up(e){ if(PAD.pen===b){ if(e&&e.pointerId!=null&&b.pid!=null&&e.pointerId!==b.pid)return; if(b.cur&&e&&e.clientX!=null){var q=padPos(b,e),l=b.cur[b.cur.length-1];if(!l||Math.abs(q.x-l.x)+Math.abs(q.y-l.y)>1)b.cur.push(q);} b.cur=null;PAD.pen=null;} }
   if(window.PointerEvent){
     /* ポインターイベントだけで受ける（タッチ・マウスと二重に記録しない） */
     b.cv.addEventListener('pointerdown',down);
@@ -956,7 +973,7 @@ function kjRender(){
   ge('KJJUDGE').style.display='none';
   ge('KJPAD').style.display='block';
   ge('KJMINE').style.display='none';
-  ge('KJRES').style.display='none';ge('KJRES').innerHTML='';ge('KJAUTO').style.display='none';ge('KJTOOLS').style.display='flex';
+  ge('KJRES').style.display='none';ge('KJRES').innerHTML='';ge('KJAUTO').style.display='none';ge('KJTOOLS').style.display='flex';kgPenLabel();
   if(KJ.auto){ge('KJSHOW').style.display='none';ge('KJGRADE').style.display='block';ge('KJBOXROW').style.display='none';kjPadSetup(q);}
   else{ge('KJGRADE').style.display='none';ge('KJBOXROW').style.display='flex';padSetN(padCount(q.answer));}
   try{ge('MAIN').scrollTop=0;}catch(e){}
@@ -1673,9 +1690,13 @@ const KE = (function () {
 
 /* ===== 書き取り自動採点（筆画ベース）＋保護者の訂正による学習 ===== */
 var KS=null, KSL=false, KSERR=false;          // 筆順データ（KanjiVG）
-var KG={on:true,level:'test'};                // 自動採点の設定（端末共通）
+var KG={on:true,level:'test',pen:'auto'};     // 自動採点の設定（端末共通）
 var LRN={c:{},rx:{},no:{},rep:[]};            // 学習内容（学習者ごと）
-function kgLoadCfg(){try{var s=localStorage.getItem('jkg3');if(s){var o=JSON.parse(s);if(typeof o.on==='boolean')KG.on=o.on;if(o.level==='normal'||o.level==='test')KG.level=o.level;}}catch(e){}}
+function kgLoadCfg(){try{var s=localStorage.getItem('jkg3');if(s){var o=JSON.parse(s);if(typeof o.on==='boolean')KG.on=o.on;if(o.level==='normal'||o.level==='test')KG.level=o.level;if(o.pen==='auto'||o.pen==='pen'||o.pen==='touch')KG.pen=o.pen;}}catch(e){}}
+/* 手のひら対策：ペンを一度でも使った端末では、指・手のひらのタッチを無視する */
+function kgPenSeen(){if(KG.pen!=='auto')return;try{if(!localStorage.getItem('jpen3')){localStorage.setItem('jpen3','1');kgPenLabel();}}catch(e){}}
+function kgPenOnly(){if(KG.pen==='pen')return true;if(KG.pen==='touch')return false;try{return localStorage.getItem('jpen3')==='1';}catch(e){return false;}}
+function kgPenLabel(){var el=ge('KJTOOLS');if(!el)return;var sp=el.getElementsByTagName('span')[0];if(sp)sp.textContent=kgPenOnly()?'ペンで書く（手をついても大丈夫）':'ここに指かペンで書く';}
 function kgSaveCfg(){try{localStorage.setItem('jkg3',JSON.stringify(KG));}catch(e){}}
 function lrnLoad(){try{var s=localStorage.getItem('jkl3_'+PROF);LRN=s?JSON.parse(s):null;}catch(e){LRN=null;}if(!LRN||typeof LRN!=='object')LRN={};LRN.c=LRN.c||{};LRN.rx=LRN.rx||{};LRN.no=LRN.no||{};LRN.rep=LRN.rep||[];}
 function lrnSave(){try{localStorage.setItem('jkl3_'+PROF,JSON.stringify(LRN));}catch(e){}}
@@ -1822,7 +1843,7 @@ function kjFixApply(a){
 /* ---- 設定画面 ---- */
 function kgRenderCfg(){
   var el=ge('KGCFG');if(!el)return;
-  ge('KGON').value=KG.on?'1':'0';ge('KGLV').value=KG.level;
+  ge('KGON').value=KG.on?'1':'0';ge('KGLV').value=KG.level;ge('KGPEN').value=KG.pen;
   var n=0;for(var c in LRN.rx)for(var k in LRN.rx[c])n++;
   var p=0;for(var k2 in LRN.c)if(LRN.c[k2]===1)p++;
   var no=[];for(var c2 in LRN.no)no.push(c2);
@@ -1834,6 +1855,7 @@ function kgBindCfg(){
   if(!ge('KGCFG'))return;
   ge('KGON').addEventListener('change',function(){KG.on=this.value==='1';kgSaveCfg();});
   ge('KGLV').addEventListener('change',function(){KG.level=this.value==='normal'?'normal':'test';kgSaveCfg();});
+  ge('KGPEN').addEventListener('change',function(){KG.pen=this.value;kgSaveCfg();kgPenLabel();});
   ge('KGPINBTN').addEventListener('click',function(){kgChangePin();});
   ge('KGRESET').addEventListener('click',function(){kgPin('暗証番号を入れてください',function(){if(!confirm('学習者'+PROF+'の「ゆるめた判定」をすべて元にもどしますか？'))return;LRN.c={};LRN.rx={};lrnSave();kgRenderCfg();});});
   ge('KGREPCLR').addEventListener('click',function(){if(!confirm('判定ミスの記録を消しますか？'))return;LRN.rep=[];lrnSave();kgRenderCfg();});
