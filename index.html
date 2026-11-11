@@ -878,6 +878,7 @@ function icRender(){
     box.appendChild(wrap);
   }
   var hs=(q.hints&&q.hints.length)?q.hints[0]:(q.hint||'');
+  if(/^漢字・(書き|用例)/.test(q.unit||''))hs='';
   ge('ICHINT').textContent=hs?('ヒント：'+hs):'';
   ge('ICNOTE').textContent='';
   ge('ICALL').style.display='block';
@@ -961,8 +962,7 @@ function kjRender(){
   tg.textContent=lblKai(q.series,q.kai)+'・'+(q.unit||'');
   tg.className='tg '+(DTAG[q.diff]||'tg-1');
   ge('KJQ').textContent=q.question;
-  var hs=(q.hints&&q.hints.length)?q.hints[0]:(q.hint||'');
-  ge('KJHINT').textContent=hs?('ヒント：'+hs):'';
+  ge('KJHINT').textContent='';
   ge('KJBIG').textContent=q.answer;
   var note=[];
   if(q.explanation)note.push(q.explanation);
