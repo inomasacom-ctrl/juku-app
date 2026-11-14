@@ -9,6 +9,7 @@
 <style>
 .cz{display:inline-block;min-width:3.4em;padding:0 .3em;margin:0 .1em;border-radius:5px;background:#f0b9c6;border:1px solid #dd93a5;color:transparent;font-weight:700;letter-spacing:.04em;cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 .cz.on{background:transparent;border-color:transparent;border-bottom:2px solid #c0392b;border-radius:0;color:#c0392b}
+.czg{display:inline-block;padding:0 .2em;margin:0 .1em;border-bottom:2px solid #8a8780;color:#55524a;font-weight:700}
 .czr{font-size:.62em;color:transparent;font-weight:400;margin-left:.15em}
 .cz.on .czr{color:#6b6860}
 :root{--bg:#f5f4f0;--card:#fff;--b1:#e5e3dc;--b2:#ccc9be;--tx:#1a1917;--mt:#6b6860;--ht:#9b9890;--bl:#2558c8;--blbg:#eaf0fd;--bltx:#1a3a8f;--gn:#1e7a3c;--gnbg:#eaf5ee;--gntx:#155228;--rd:#c0392b;--rdbg:#fdf0ee;--rdtx:#7a1a12;--am:#b06a00;--ambg:#fdf4e3;--amtx:#6b4000}
@@ -846,6 +847,7 @@ function icStart(qs){
   shP(6);icRender();
 }
 function icRender(){
+  if(IC.qs[IC.i])IC.qs[IC.i]=qVar(IC.qs[IC.i]);
   var q=IC.qs[IC.i];if(!q){icFinish();return;}
   IC.timeup=false;IC.total=0;IC.revealed=0;
   ge('ICPOS').textContent=(IC.i+1)+' / '+IC.qs.length;
@@ -862,9 +864,13 @@ function icRender(){
     return b;
   }
   if(q.fmt==='cloze'&&q.cloze){
-    var pp=czParse(q.cloze);
+    var pp=czParse(q.cloze),bl=[];
+    for(var i=0;i<pp.length;i++)if(pp[i].t===1)bl.push(i);
+    var giv={};
+    if(bl.length>=2){var nr=Math.floor(Math.random()*(Math.floor(bl.length/2)+1));var sb2=shArr(bl);for(var g=0;g<nr;g++)giv[sb2[g]]=1;}
     for(var i=0;i<pp.length;i++){
       if(pp[i].t===0){var sp=document.createElement('span');sp.textContent=pp[i].v;box.appendChild(sp);}
+      else if(giv[i]){var gv=document.createElement('span');gv.className='czg';gv.textContent=pp[i].v;box.appendChild(gv);}
       else box.appendChild(chip(pp[i].v,pp[i].r));
     }
   }else{
@@ -961,7 +967,7 @@ function kjRender(){
   var tg=ge('KJTAG');
   tg.textContent=lblKai(q.series,q.kai)+'・'+(q.unit||'');
   tg.className='tg '+(DTAG[q.diff]||'tg-1');
-  ge('KJQ').textContent=q.question;
+  ge('KJQ').textContent=kjAltQ(q);
   ge('KJHINT').textContent='';
   ge('KJBIG').textContent=q.answer;
   var note=[];
@@ -1119,10 +1125,64 @@ function gSubs(ans){
   return s.length>=2?s:null;
 }
 function trC(c){
-  if(c.length>2&&(c[0]==='ア'||c[0]==='イ'||c[0]==='ウ'||c[0]==='エ')){var c2=c.charCodeAt(1);if(c2===46||c2===65294)return c.slice(2).trim();}return c;
+  if(c.length>2&&LBS.indexOf(c[0])>=0){var c2=c.charCodeAt(1);if(c2===46||c2===65294)return c.slice(2).trim();}return c;
+}
+/* ===== ランダム性（覚えてしまうのを防ぐ） ===== */
+var LBS=['ア','イ','ウ','エ','オ','カ','キ','ク','ケ','コ'];
+var RX_LB=/(^|[^\u30a1-\u30f6\u30fc])([アイウエオカキクケコ])(?=$|[^\u30a1-\u30f6\u30fc])/g;
+function lbOf(c,i){if(c&&c.length>2&&LBS.indexOf(c[0])>=0){var c2=c.charCodeAt(1);if(c2===46||c2===65294)return c[0];}return LBS[i];}
+function hasLbRef(t){t=String(t||'').replace(/[アイウエオカキクケコ][〜～\-－][アイウエオカキクケコ]/g,'');RX_LB.lastIndex=0;return RX_LB.test(t);}
+function lbMap(t,mp){if(!t||!mp)return t;return String(t).replace(RX_LB,function(m,p,l){return p+(mp[l]||l);});}
+/* 選択肢の順番を入れかえる。ラベル付きの項目を問題文が参照している場合は入れかえない */
+function chPrep(q){
+  var n=q.choices.length,orig=[],i;
+  for(i=0;i<n;i++)orig.push(lbOf(q.choices[i],i));
+  var ok=!hasLbRef(q.question);
+  for(i=0;i<n&&ok;i++)if(hasLbRef(trC(q.choices[i])))ok=false;
+  var idx=[];for(i=0;i<n;i++)idx.push(i);
+  if(ok)idx=shArr(idx);
+  var items=[],mp={};
+  for(i=0;i<n;i++){items.push({orig:orig[idx[i]],lab:LBS[i],txt:trC(q.choices[idx[i]])});mp[orig[idx[i]]]=LBS[i];}
+  return {items:items,map:mp};
+}
+/* 漢字の書き取り：同じ答えの別の文があれば、毎回どちらかの文で出す */
+var KJALT=null;
+function kjAltQ(q){
+  if(!q||!/^漢字・書き/.test(q.unit||''))return q?q.question:'';
+  if(!KJALT){KJALT={};for(var i=0;i<AQ.length;i++){var x=AQ[i];if(x&&x.fmt==='text'&&/^漢字・書き/.test(x.unit||'')&&x.answer){(KJALT[x.answer]=KJALT[x.answer]||[]).push(x.question);}}}
+  var L=KJALT[q.answer]||[];
+  var u=[];for(var j=0;j<L.length;j++)if(u.indexOf(L[j])<0)u.push(L[j]);
+  if(u.length<2)return q.question;
+  return u[Math.floor(Math.random()*u.length)];
+}
+/* 数値替え：vars があれば、元の問題とあわせた中から毎回1つを選ぶ */
+function qVar(q){
+  if(!q||!q.vars||!q.vars.length||q._var!==undefined)return q;
+  var k=Math.floor(Math.random()*(q.vars.length+1));
+  var r={};for(var key in q)r[key]=q[key];
+  r._var=k;
+  if(k===0)return r;
+  var v=q.vars[k-1];for(var key2 in v)r[key2]=v[key2];
+  if('hint' in v)r.hints=v.hint?[v.hint]:[];
+  return r;
+}
+/* ことば（和語・慣用句・ことわざ）：半分の確率で「言葉→意味を選ぶ」に向きを変える */
+function vocRev(q){
+  if(!q||q.fmt!=='text'||q.subject!=='国語'||!/和語|慣用句|ことわざ/.test(q.unit||''))return q;
+  var m=/^「([^」]+)」…([\s\S]+)$/.exec(q.explanation||'');if(!m)return q;
+  if(Math.random()<0.5)return q;
+  var w=m[1],mean=m[2].trim(),pool=[];
+  for(var i=0;i<AQ.length;i++){var x=AQ[i];if(x.unit!==q.unit||x.fmt!=='text')continue;var mm=/^「([^」]+)」…([\s\S]+)$/.exec(x.explanation||'');if(!mm||mm[1]===w)continue;var t=mm[2].trim();if(t!==mean&&pool.indexOf(t)<0)pool.push(t);}
+  if(pool.length<3)return q;
+  pool=shArr(pool).slice(0,3);
+  var cs=['ア. '+mean];for(var k=0;k<3;k++)cs.push(LBS[k+1]+'. '+pool[k]);
+  var r={};for(var key in q)r[key]=q[key];
+  r.fmt='choice';r.choices=cs;r.answer='ア';r.question='「'+w+'」の意味として最も適切なものを選びなさい。';r.hint='';r.hints=[];r._rev=true;
+  return r;
 }
 function rnQ(){
-  SE.done=false;SE.sel=null;SE.subs=null;SE.hi=0;
+  SE.done=false;SE.sel=null;SE.subs=null;SE.hi=0;SE.cmap=null;
+  SE.qs[SE.idx]=vocRev(qVar(SE.qs[SE.idx]));
   var q=SE.qs[SE.idx];
   ge('PP').textContent=(SE.idx+1)+'/'+SE.qs.length+'問';
   var dh='';
@@ -1136,13 +1196,13 @@ function rnQ(){
   ge('QM').innerHTML='<span class="tg '+(STAG[q.subject]||'')+'">'+q.subject+'</span>'
     +'<span class="tg '+(DTAG[q.diff]||'')+'">'+q.diff+'</span>'
     +'<span class="tg" style="background:var(--bg);color:var(--mt);font-size:10px">'+lblKai(q.series,q.kai)+'</span>';
-  ge('QX').textContent=q.question;
+  ge('QX').textContent=kjAltQ(q);
   ge('HA').innerHTML='';ge('RA').innerHTML='';
   var qi=ge('QI');
   if(q.fmt==='choice'&&q.choices&&q.choices.length){
-    var lb=['ア','イ','ウ','エ'],h='<div class="cs">';
-    for(var i=0;i<q.choices.length;i++)
-      h+='<button class="cb" data-l="'+lb[i]+'"><span class="cl">'+lb[i]+'．</span><span>'+trC(q.choices[i])+'</span></button>';
+    var cp=chPrep(q),h='<div class="cs">';SE.cmap=cp.map;
+    for(var i=0;i<cp.items.length;i++)
+      h+='<button class="cb" data-l="'+cp.items[i].orig+'"><span class="cl">'+cp.items[i].lab+'．</span><span>'+cp.items[i].txt+'</span></button>';
     qi.innerHTML=h+'</div>';
     var bs=qi.querySelectorAll('.cb');
     for(var i=0;i<bs.length;i++){
@@ -1253,8 +1313,8 @@ function isDesc(ans){
 function renderRes(ok,flip){
   var q=SE.qs[SE.idx],hn=SE.idx<SE.qs.length-1;
   var html='<div class="exp '+(ok?'ok':'ng')+'">'
-    +'<div class="exh">'+(ok?'&#9989; 正解！':'&#10060; 不正解。正解：'+q.answer)+'</div>'
-    +(q.explanation||'')+(q.point?'<div class="pt">&#128204; '+q.point+'</div>':'')+'</div>';
+    +'<div class="exh">'+(ok?'&#9989; 正解！':'&#10060; 不正解。正解：'+(q.fmt==='choice'&&SE.cmap?lbMap(q.answer,SE.cmap):q.answer))+'</div>'
+    +(q.fmt==='choice'&&SE.cmap?lbMap(q.explanation||'',SE.cmap):(q.explanation||''))+(q.point?'<div class="pt">&#128204; '+(q.fmt==='choice'&&SE.cmap?lbMap(q.point,SE.cmap):q.point)+'</div>':'')+'</div>';
   if(!ok&&flip)html+='<button class="nxbtn" id="FLIP" style="background:var(--gn);margin-bottom:8px">&#9989; やっぱり合っていた（○にする）</button>';
   html+='<button class="nxbtn" id="NX">'+(hn?'次の問題へ &#8594;':'結果を見る &#8594;')+'</button>';
   ge('RA').innerHTML=html;
