@@ -106,6 +106,18 @@ select:disabled{opacity:.4}
 #PG5{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #PG5 canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
 #KGPINI{font-size:26px;letter-spacing:.5em;text-align:center;padding:8px;border:1.5px solid var(--b2);border-radius:8px;width:100%;font-family:inherit}
+.qsvg{display:none;background:#fff;border:1px solid var(--b1);border-radius:10px;padding:10px;margin:0 0 14px;text-align:center;overflow-x:auto}
+.qsvg.on{display:block}
+.qsvg svg{max-width:100%;height:auto;display:block;margin:0 auto}
+.rbl{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.rbi{display:flex;align-items:flex-start;gap:8px;background:var(--card);border:1.5px solid var(--b2);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.6;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.rbi.on{border-color:var(--gn);background:var(--gnbg);color:var(--gntx)}
+.rbi input{width:18px;height:18px;margin-top:2px;flex-shrink:0}
+.rbs{font-size:12px;font-weight:700;margin-top:8px;color:var(--mt)}
+.nxbtn:disabled{opacity:.4;cursor:not-allowed}
+.myans{background:var(--card);border:1px solid var(--b1);border-radius:6px;padding:8px 10px;margin-top:8px;font-size:13px;color:var(--tx);white-space:pre-wrap}
+.ewb{margin-top:8px;padding:7px 10px;border-radius:6px;font-size:12px;font-weight:700;background:var(--blbg);color:var(--bltx)}
+.ewb.grad{background:var(--ambg);color:var(--amtx)}
 </style>
 </head>
 <body>
@@ -203,6 +215,11 @@ select:disabled{opacity:.4}
         </select>
         回正解で卒業（出題されなくなる）
       </div>
+      <div class="fr" style="padding:0 2px 6px 28px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mt);cursor:pointer">
+          <input type="checkbox" id="FDD" style="width:16px;height:16px" checked> 別の日に正解したときだけカウント（忘却対策）
+        </label>
+      </div>
       <div class="fr">
         <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;padding:4px 2px">
           <input type="checkbox" id="FGM" style="width:18px;height:18px"> 組み分け対策（科目×難易度ごとに10問ずつバランス出題）
@@ -251,6 +268,7 @@ select:disabled{opacity:.4}
     <div class="card">
       <div class="qm" id="QM"></div>
       <div class="qx" id="QX"></div>
+      <div class="qsvg" id="QSVG"></div>
       <div id="QI"></div>
       <div class="ar"><button class="ckbtn" id="CKBTN">答え合わせ</button><button class="htbtn" id="HTBTN">ヒント</button></div>
       <div id="HA"></div><div id="RA"></div>
@@ -411,8 +429,28 @@ var ST2={total:0,correct:0,sub:{算数:{t:0,c:0},国語:{t:0,c:0},社会:{t:0,c:
 var HS=[];
 var SE={qs:[],idx:0,res:[],done:false,sel:null,subs:null};
 var TID=null,TS=0,TM=1;
-var PROF=1, WR={}, EW={}, TH=3;
+var PROF=1, WR={}, EW={}, TH=3, DD=true;
 function ge(id){return document.getElementById(id);}
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function sanitizeSvg(s){
+  if(!s)return '';
+  return String(s).replace(/<script[\s\S]*?<\/script>/gi,'').replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,'');
+}
+function todayStr(){
+  var d=new Date();
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+}
+function ewCnt(v){return typeof v==='number'?v:(v&&typeof v.c==='number'?v.c:0);}
+function ewDate(v){return (v&&typeof v==='object'&&v.d)?String(v.d):'';}
+function ewClone(v){if(v===null||v===undefined)return null;return typeof v==='object'?{c:ewCnt(v),d:ewDate(v)}:v;}
+function ewApply(id,ok){
+  if(!ok){EW[id]={c:0,d:''};return 'reset';}
+  if(!(id in EW))return 'none';
+  var c=ewCnt(EW[id]),d=ewDate(EW[id]),td=todayStr();
+  if(DD&&d===td){return 'same_day';}
+  EW[id]={c:c+1,d:td};
+  return (c+1>=TH)?'graduated':'inc';
+}
 function freshST(){return {total:0,correct:0,sub:{算数:{t:0,c:0},国語:{t:0,c:0},社会:{t:0,c:0},理科:{t:0,c:0}}};}
 function loadProf(){
   try{var s=localStorage.getItem('jst3_'+PROF);ST2=s?JSON.parse(s):freshST();}catch(e){ST2=freshST();}
@@ -425,8 +463,12 @@ function svW(){try{localStorage.setItem('jwr3_'+PROF,JSON.stringify(WR));}catch(
 function svEW(){try{localStorage.setItem('jew3_'+PROF,JSON.stringify(EW));}catch(e){}}
 function wrCount(){var n=0;for(var k in WR)n++;return n;}
 // 卒業しきい値（連続正解◯回）：学習者共通の設定
-function loadTH(){try{var t=localStorage.getItem('jth3');TH=t?parseInt(t,10):3;}catch(e){TH=3;}if(isNaN(TH)||TH<1)TH=3;}
+function loadTH(){
+  try{var t=localStorage.getItem('jth3');TH=t?parseInt(t,10):3;}catch(e){TH=3;}if(isNaN(TH)||TH<1)TH=3;
+  try{var d=localStorage.getItem('jdd3');DD=(d===null)?true:(d==='1');}catch(e){DD=true;}
+}
 function svTH(){try{localStorage.setItem('jth3',String(TH));}catch(e){}}
+function svDD(){try{localStorage.setItem('jdd3',DD?'1':'0');}catch(e){}}
 function prfStyle(active){return 'flex:1;padding:8px 10px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;'+(active?'background:#2563eb;color:#fff':'background:#e8eef5;color:#55606e');}
 function styleProf(){var b1=ge('PRF1'),b2=ge('PRF2');if(b1)b1.style.cssText=prfStyle(PROF===1);if(b2)b2.style.cssText=prfStyle(PROF===2);}
 function setProf(p){PROF=p;try{localStorage.setItem('jprof',String(p));}catch(e){}styleProf();loadProf();upST();bK();upMC();try{kgRenderCfg();}catch(e){}}
@@ -483,7 +525,7 @@ document.addEventListener('DOMContentLoaded',function(){
   ge('ICNG').addEventListener('click',function(){icNext(false);});
   ge('ICEND').addEventListener('click',function(){icStop();if(IC.ok+IC.ng>0){icFinish();}else{shP(0);}});
   ge('RSTBTN').addEventListener('click',function(){rstA();});
-  var fi=['FS','FSER','FK','FU','FD','FRV','FEW','FTH','FGM','FKJ','FKJN','FKJW','FIC','FICN','FICT'];
+  var fi=['FS','FSER','FK','FU','FD','FRV','FEW','FTH','FDD','FGM','FKJ','FKJN','FKJW','FIC','FICN','FICT'];
   for(var i=0;i<fi.length;i++){
     (function(id){
       var el=ge(id);if(!el)return;
@@ -493,6 +535,7 @@ document.addEventListener('DOMContentLoaded',function(){
   }
   loadTH();kgLoadCfg();kgBindCfg();
   if(ge('FTH')){ge('FTH').value=String(TH);}
+  if(ge('FDD')){ge('FDD').checked=DD;}
   // 既存データ（旧バージョン）を学習者①へ引き継ぎ（初回のみ）
   try{if(localStorage.getItem('jst3')&&!localStorage.getItem('jst3_1'))localStorage.setItem('jst3_1',localStorage.getItem('jst3'));}catch(e){}
   try{if(localStorage.getItem('jhi3')&&!localStorage.getItem('jhi3_1'))localStorage.setItem('jhi3_1',localStorage.getItem('jhi3'));}catch(e){}
@@ -534,7 +577,7 @@ function shP(n){
   ge('NB0').classList.toggle('on',n<3||n===5);ge('NB1').classList.toggle('on',n===3);ge('NB2').classList.toggle('on',n===4);
   try{ge('MAIN').scrollTop=0;}catch(e){}
 }
-function onF(id){if(id==='FIC'&&ge('FIC').checked&&ge('FKJ'))ge('FKJ').checked=false;if(id==='FKJ'&&ge('FKJ').checked&&ge('FIC'))ge('FIC').checked=false;if(id==='FS'||id==='FSER')bK();else if(id==='FK')bU();else if(id==='FTH'){var v=parseInt(ge('FTH').value,10);if(!isNaN(v)&&v>=1){TH=v;svTH();}upMC();}else upMC();}
+function onF(id){if(id==='FIC'&&ge('FIC').checked&&ge('FKJ'))ge('FKJ').checked=false;if(id==='FKJ'&&ge('FKJ').checked&&ge('FIC'))ge('FIC').checked=false;if(id==='FS'||id==='FSER')bK();else if(id==='FK')bU();else if(id==='FTH'){var v=parseInt(ge('FTH').value,10);if(!isNaN(v)&&v>=1){TH=v;svTH();}upMC();}else if(id==='FDD'){DD=!!ge('FDD').checked;svDD();upMC();}else upMC();}
 function svS(){try{localStorage.setItem('jst3_'+PROF,JSON.stringify(ST2));}catch(e){}}
 function svH(){try{localStorage.setItem('jhi3_'+PROF,JSON.stringify(HS.slice(-50)));}catch(e){}}
 function upST(){
@@ -586,7 +629,7 @@ function pl(){
     if(s&&q.subject!==s)continue;if(sr&&q.series!==sr)continue;
     if(k!==null&&!kaiMatch(q.kai,k))continue;if(u&&q.unit!==u)continue;if(d&&q.diff!==d)continue;
     if(rev&&!WR[q.id])continue;
-    if(few){ if(!(q.id in EW))continue; if(EW[q.id]>=TH)continue; }
+    if(few){ if(!(q.id in EW))continue; if(ewCnt(EW[q.id])>=TH)continue; }
     r.push(q);
   }
   return r;
@@ -645,7 +688,7 @@ function upMC(){
     el.style.color=cnt===0?'var(--rd)':'var(--mt)';
     return;
   }
-  var lbl=few?('一度間違えた（連続'+TH+'回正解で卒業）該当：'):(rev?'復習（×だけ）該当：':'該当：');
+  var lbl=few?('一度間違えた（'+(DD?'別日に':'')+'連続'+TH+'回正解で卒業）該当：'):(rev?'復習（×だけ）該当：':'該当：');
   el.textContent=lbl+p.length+'問';el.style.color=p.length===0?'var(--rd)':'var(--mt)';
 }
 
@@ -855,6 +898,7 @@ function icRender(){
   tg.textContent=q.subject+'・'+lblKai(q.series,q.kai)+(q.unit?'・'+q.unit:'');
   tg.className='tg '+(STAG[q.subject]||'');
   var box=ge('ICQ');box.innerHTML='';
+  if(q.svg){var svd=document.createElement('div');svd.className='qsvg on';svd.innerHTML=sanitizeSvg(q.svg);box.appendChild(svd);}
   function chip(txt,ruby){
     IC.total++;
     var b=document.createElement('span');
@@ -921,8 +965,8 @@ function icNext(ok){
     try{
       var sub=q.subject,id=q.id;
       ST2.total++;if(!ST2.sub[sub])ST2.sub[sub]={t:0,c:0};ST2.sub[sub].t++;
-      if(ok){ST2.correct++;ST2.sub[sub].c++;delete WR[id];if(id in EW)EW[id]=EW[id]+1;}
-      else{WR[id]=1;EW[id]=0;}
+      if(ok){ST2.correct++;ST2.sub[sub].c++;delete WR[id];ewApply(id,true);}
+      else{WR[id]=1;ewApply(id,false);}
       svS();svW();svEW();upST();
     }catch(e){}
   }
@@ -1001,8 +1045,8 @@ function kjNext(ok){
       ST2.total++;if(!ST2.sub[sub])ST2.sub[sub]={t:0,c:0};ST2.sub[sub].t++;
       if(ok){
         ST2.correct++;ST2.sub[sub].c++;delete WR[id];
-        if(id in EW)EW[id]=EW[id]+1;
-      }else{ WR[id]=1;EW[id]=0; }
+        ewApply(id,true);
+      }else{ WR[id]=1;ewApply(id,false); }
       svS();svW();svEW();upST();
     }catch(e){}
   }
@@ -1197,6 +1241,8 @@ function rnQ(){
     +'<span class="tg '+(DTAG[q.diff]||'')+'">'+q.diff+'</span>'
     +'<span class="tg" style="background:var(--bg);color:var(--mt);font-size:10px">'+lblKai(q.series,q.kai)+'</span>';
   ge('QX').textContent=kjAltQ(q);
+  var qsv=ge('QSVG');
+  if(qsv){if(q.svg){qsv.innerHTML=sanitizeSvg(q.svg);qsv.classList.add('on');}else{qsv.innerHTML='';qsv.classList.remove('on');}}
   ge('HA').innerHTML='';ge('RA').innerHTML='';
   var qi=ge('QI');
   if(q.fmt==='choice'&&q.choices&&q.choices.length){
@@ -1312,9 +1358,16 @@ function isDesc(ans){
 // 結果の表示（ok：正誤、flip：×取り消しボタンを出すか）
 function renderRes(ok,flip){
   var q=SE.qs[SE.idx],hn=SE.idx<SE.qs.length-1;
+  var ewb='';
+  if(ok&&SE._ewStatus&&SE._ewStatus!=='none'){
+    var curC=ewCnt(EW[q.id]);
+    if(SE._ewStatus==='graduated')ewb='<div class="ewb grad">&#127891; 連続'+TH+'回達成！復習リストから卒業しました！</div>';
+    else if(SE._ewStatus==='inc')ewb='<div class="ewb">&#128200; 復習カウント +1（'+curC+'/'+TH+'回・卒業まであと'+(TH-curC)+'回）</div>';
+    else if(SE._ewStatus==='same_day')ewb='<div class="ewb">&#128197; 今日すでに1回カウント済み（別の日に正解すると卒業に近づきます：'+curC+'/'+TH+'回）</div>';
+  }
   var html='<div class="exp '+(ok?'ok':'ng')+'">'
     +'<div class="exh">'+(ok?'&#9989; 正解！':'&#10060; 不正解。正解：'+(q.fmt==='choice'&&SE.cmap?lbMap(q.answer,SE.cmap):q.answer))+'</div>'
-    +(q.fmt==='choice'&&SE.cmap?lbMap(q.explanation||'',SE.cmap):(q.explanation||''))+(q.point?'<div class="pt">&#128204; '+(q.fmt==='choice'&&SE.cmap?lbMap(q.point,SE.cmap):q.point)+'</div>':'')+'</div>';
+    +(q.fmt==='choice'&&SE.cmap?lbMap(q.explanation||'',SE.cmap):(q.explanation||''))+(q.point?'<div class="pt">&#128204; '+(q.fmt==='choice'&&SE.cmap?lbMap(q.point,SE.cmap):q.point)+'</div>':'')+ewb+'</div>';
   if(!ok&&flip)html+='<button class="nxbtn" id="FLIP" style="background:var(--gn);margin-bottom:8px">&#9989; やっぱり合っていた（○にする）</button>';
   html+='<button class="nxbtn" id="NX">'+(hn?'次の問題へ &#8594;':'結果を見る &#8594;')+'</button>';
   ge('RA').innerHTML=html;
@@ -1324,13 +1377,13 @@ function renderRes(ok,flip){
 // 結果を確定して採点（×リスト＋履歴リストEWの連続正解カウントも更新）
 function finRes(ok){
   var q=SE.qs[SE.idx],sub=q.subject,id=q.id;
-  SE._pEW=(id in EW)?EW[id]:null; // 取り消し用に、今回採点前の履歴状態を記憶
+  SE._pEW=(id in EW)?ewClone(EW[id]):null; // 取り消し用に、今回採点前の履歴状態を記憶
   ST2.total++;if(!ST2.sub[sub])ST2.sub[sub]={t:0,c:0};ST2.sub[sub].t++;
   if(ok){
     ST2.correct++;ST2.sub[sub].c++;delete WR[id];
-    if(id in EW)EW[id]=EW[id]+1; // 過去に間違えた問題なら連続正解を+1
+    SE._ewStatus=ewApply(id,true);
   }else{
-    WR[id]=1;EW[id]=0; // 一度でも間違えた→履歴に記録し、連続正解を0に
+    WR[id]=1;SE._ewStatus=ewApply(id,false); // 一度でも間違えた→履歴に記録し、連続正解を0に
   }
   SE.res[SE.idx]=ok;svS();svW();svEW();upST();
   renderRes(ok,!ok);
@@ -1342,18 +1395,64 @@ function flipCorrect(){
   ST2.correct++;if(!ST2.sub[sub])ST2.sub[sub]={t:0,c:0};ST2.sub[sub].c++;
   delete WR[id];
   // 本当は正解だったので、直前に付けた×を取り消す
-  if(SE._pEW===null||SE._pEW===undefined)delete EW[id]; // もともと履歴に無い→履歴にも入れない
-  else EW[id]=SE._pEW+1;                                 // 元の連続正解数＋今回の正解
+  if(SE._pEW===null||SE._pEW===undefined){delete EW[id];SE._ewStatus='none';}
+  else{EW[id]=ewClone(SE._pEW);SE._ewStatus=ewApply(id,true);}
   SE.res[SE.idx]=true;svS();svW();svEW();upST();
   renderRes(true,false);
 }
-// 記述問題：模範解答を見せて自分で○×を選ぶ
+// 記述問題：模範解答とチェックリストを見せて自分で○×を選ぶ
 function selfJudge(){
-  var q=SE.qs[SE.idx],model;
-  if(SE.subs){var t='';for(var i=0;i<SE.subs.length;i++)t+='<div>('+SE.subs[i].n+') '+SE.subs[i].a+'</div>';model=t;}
-  else model=q.answer||'';
+  var q=SE.qs[SE.idx],model,mine='';
+  if(SE.subs){
+    var t='',mt='';
+    for(var i=0;i<SE.subs.length;i++){
+      t+='<div>('+SE.subs[i].n+') '+escH(SE.subs[i].a)+'</div>';
+      var ta=ge('TA'+SE.subs[i].n);
+      mt+='('+SE.subs[i].n+') '+(ta?ta.value.trim():'')+(i<SE.subs.length-1?'\n':'');
+    }
+    model=t;mine=mt;
+  }else{
+    model=escH(q.answer||'');
+    var ta0=ge('TA0');mine=ta0?ta0.value.trim():'';
+  }
+  var rb=Array.isArray(q.rubric)&&q.rubric.length?q.rubric:null;
+  var mineHtml=mine?'<div class="myans"><b>あなたの答え：</b><br>'+escH(mine)+'</div>':'';
+  if(rb){
+    var rbh='<div class="rbl">';
+    for(var j=0;j<rb.length;j++){
+      rbh+='<label class="rbi" data-ri="'+j+'"><input type="checkbox" class="rbc"><span>'+escH(rb[j])+'</span></label>';
+    }
+    rbh+='</div><div class="rbs" id="RBS">チェック：0 / '+rb.length+' 項目（すべてに入ると○にできます）</div>';
+    ge('RA').innerHTML='<div class="exp">'
+      +'<div class="exh">&#128221; 要素チェック採点：自分の答えに入っている項目にチェックを入れよう</div>'
+      +mineHtml
+      +'<div class="pt" style="margin-top:8px"><b>模範解答：</b><br>'+model+'</div>'
+      +rbh
+      +'<div style="display:flex;gap:10px;margin-top:12px">'
+      +'<button class="nxbtn" id="SJO" style="background:var(--gn);flex:1" disabled>&#9989; すべてクリア（○）</button>'
+      +'<button class="nxbtn" id="SJX" style="background:var(--rd);flex:1">&#10060; たりない要素あり（×）</button></div></div>';
+    var chks=ge('RA').querySelectorAll('.rbc');
+    var sjo=ge('SJO'),rbs=ge('RBS');
+    function upRb(){
+      var cnt=0;
+      for(var k=0;k<chks.length;k++){
+        var on=chks[k].checked;
+        if(on)cnt++;
+        if(chks[k].parentNode)chks[k].parentNode.classList.toggle('on',on);
+      }
+      var all=(cnt===chks.length);
+      sjo.disabled=!all;
+      rbs.textContent=all?('すべて達成！（'+cnt+' / '+chks.length+' 項目）○ボタンを押そう'):('チェック：'+cnt+' / '+chks.length+' 項目（すべてに入ると○にできます）');
+      rbs.style.color=all?'var(--gn)':'var(--mt)';
+    }
+    for(var k=0;k<chks.length;k++)chks[k].addEventListener('change',upRb);
+    sjo.addEventListener('click',function(){if(!sjo.disabled)finRes(true);});
+    ge('SJX').addEventListener('click',function(){finRes(false);});
+    return;
+  }
   ge('RA').innerHTML='<div class="exp">'
     +'<div class="exh">&#128221; 記述問題です。模範解答と見くらべて、自分で○か×かを選んでください。</div>'
+    +mineHtml
     +'<div class="pt" style="margin-top:8px"><b>模範解答：</b><br>'+model+'</div>'
     +'<div style="display:flex;gap:10px;margin-top:12px">'
     +'<button class="nxbtn" id="SJO" style="background:var(--gn)">&#9989; 合っていた</button>'
@@ -1371,18 +1470,31 @@ function chkA(){
     for(var i=0;i<bs.length;i++){bs[i].classList.remove('sl');if(bs[i].getAttribute('data-l')===cl)bs[i].classList.add('ok');else if(bs[i].getAttribute('data-l')===SE.sel&&!ok)bs[i].classList.add('ng');}
     stpT();SE.done=true;finRes(ok);return;
   }
+  var hasRb=Array.isArray(q.rubric)&&q.rubric.length>0;
   if(SE.subs){
     for(var i=0;i<SE.subs.length;i++){var ta=ge('TA'+SE.subs[i].n);if(!ta||ta.value.trim()===''){alert('全ての答えを入力してください');return;}}
     var auto=true,desc=false;
-    for(var i=0;i<SE.subs.length;i++){if(!mA(ge('TA'+SE.subs[i].n).value,SE.subs[i].a))auto=false;if(isDesc(SE.subs[i].a))desc=true;}
+    for(var i=0;i<SE.subs.length;i++){
+      var d=isDesc(SE.subs[i].a);
+      if(d)desc=true;
+      var v=ge('TA'+SE.subs[i].n).value;
+      if(hasRb||d){if(nrm(v)!==nrm(SE.subs[i].a))auto=false;}
+      else{if(!mA(v,SE.subs[i].a))auto=false;}
+    }
     stpT();SE.done=true;
-    if(auto)finRes(true);else if(desc)selfJudge();else finRes(false);
+    if(hasRb)selfJudge();else if(auto)finRes(true);else if(desc)selfJudge();else finRes(false);
     return;
   }
   var ta=ge('TA0');if(!ta||ta.value.trim()===''){alert('答えを入力してください');return;}
-  var ok=mA(ta.value,q.answer||'');
+  var ans=q.answer||'',desc0=isDesc(ans);
   stpT();SE.done=true;
-  if(ok)finRes(true);else if(isDesc(q.answer||''))selfJudge();else finRes(false);
+  if(hasRb){selfJudge();return;}
+  if(desc0){
+    if(nrm(ta.value)===nrm(ans))finRes(true);else selfJudge();
+    return;
+  }
+  var ok=mA(ta.value,ans);
+  finRes(ok);
 }
 function shR(){
   stpT();var c=0;for(var i=0;i<SE.res.length;i++)if(SE.res[i])c++;
