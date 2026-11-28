@@ -1317,33 +1317,44 @@ function isNumericAnswer(s){
   return /^\d/.test(s.trim()) || /^\(1\)/.test(s.trim());
 }
 // メイン答え合わせ関数
-function mA(ua,ca){
-  var u=nrm(ua), c=nrm(ca);
-  // 完全一致
-  if(u===c)return true;
-  // 部分一致（片方がもう片方を含む）
-  if(u.indexOf(c)>=0||c.indexOf(u)>=0)return true;
-  // 数値比較：単位を除いた数値が一致するか
-  var un=extractNums(u), cn=extractNums(c);
-  if(un.length>0&&cn.length>0&&un.length===cn.length){
-    var allMatch=true;
-    for(var i=0;i<un.length;i++){if(Math.abs(un[i]-cn[i])>0.001){allMatch=false;break;}}
-    if(allMatch)return true;
-  }
-  // 分数の表記ゆれ：4/6と2/3（同じ値）
-  var uf=u.match(/(\d+)\/(\d+)/), cf=c.match(/(\d+)\/(\d+)/);
-  if(uf&&cf){
-    if(Math.abs(parseInt(uf[1])*parseInt(cf[2])-parseInt(uf[2])*parseInt(cf[1]))<0.001)return true;
-  }
-  // 割合：0.5と50%と1/2を同一視
-  var uPct=u.replace('%','').replace('％',''), cPct=c.replace('%','').replace('％','');
-  if(!isNaN(parseFloat(uPct))&&!isNaN(parseFloat(cPct))){
-    var uv=parseFloat(uPct), cv=parseFloat(cPct);
-    // 一方がパーセント表記（>1）でもう一方が小数（<=1）の場合
-    if((uv>1&&cv<=1&&Math.abs(uv/100-cv)<0.001)||(cv>1&&uv<=1&&Math.abs(cv/100-uv)<0.001))return true;
-  }
-  return false;
+// 採点：1=正解 0=不正解 2=自己判定へ（答えの一部だけ書かれているとき）
+var MA_KEY=['午前','午後','東','西','南','北','上弦','下弦','満月','新月','以上','以下','未満','直列','並列','酸性','中性','アルカリ性','右','左'];
+function maVal(s){
+  var f=s.match(/^[^\d]*(\d+)\/(\d+)[^\d]*$/);if(f&&+f[2]!==0)return (+f[1])/(+f[2]);
+  var n=s.match(/\d+(?:\.\d+)?/g);if(n&&n.length===1)return +n[0];
+  return null;
 }
+function mA3(ua,ca){
+  var u=nrm(ua), c=nrm(ca);
+  if(u===c)return 1;
+  if(u==='')return 0;
+  // 方角・午前午後などの大事な言葉が正解にあるのに答えにない→不正解
+  for(var k=0;k<MA_KEY.length;k++){var kw=MA_KEY[k];if(c.indexOf(kw)>=0&&u.indexOf(kw)<0&&!(kw==='南'&&c.indexOf('南')<0))return u.length&&c.indexOf(u)>=0?2:0;}
+  var sep=function(x){return nrm(String(x).replace(/[、，,・\s　]+/g,'X'));};
+  var un=extractNums(sep(ua)), cn=extractNums(sep(ca));
+  if(cn.length>0){
+    // 数がすべて同じ順に一致
+    if(un.length===cn.length){var all=true;for(var i=0;i<un.length;i++){if(Math.abs(un[i]-cn[i])>0.001){all=false;break;}}if(all)return 1;}
+    // 分数どうしの表記ゆれ（4/6と2/3）
+    var uf=u.match(/(\d+)\/(\d+)/), cf=c.match(/(\d+)\/(\d+)/);
+    if(uf&&cf&&un.length===cn.length){if(parseInt(uf[1])*parseInt(cf[2])===parseInt(uf[2])*parseInt(cf[1]))return 1;}
+    // 分数と小数・整数（5/2と2.5）
+    var uv=maVal(u), cv=maVal(c);
+    if(uv!==null&&cv!==null&&Math.abs(uv-cv)<0.001&&(/\//.test(u)||/\//.test(c)))return 1;
+    // 割合：0.5と50%
+    var uP=u.replace('%','').replace('％',''), cP=c.replace('%','').replace('％','');
+    if(!isNaN(parseFloat(uP))&&!isNaN(parseFloat(cP))){var a=parseFloat(uP),b=parseFloat(cP);
+      if((/[%％]/.test(u)&&a>1&&b<=1&&Math.abs(a/100-b)<0.001)||(/[%％]/.test(c)&&b>1&&a<=1&&Math.abs(b/100-a)<0.001))return 1;}
+    // 数の一部だけ書いた（例：3つのうち2つ）→自己判定
+    if(un.length>0&&un.length<cn.length&&c.indexOf(u)>=0)return 2;
+    return 0;
+  }
+  // 数のない答え
+  if(u.indexOf(c)>=0)return 1;           // 正解の言葉を全部ふくむ（「です」などがついた）
+  if(c.indexOf(u)>=0)return 2;           // 正解の一部だけ→自己判定
+  return 0;
+}
+function mA(ua,ca){return mA3(ua,ca)===1;}
 // 記述（説明）系の答えかどうか。数値の列挙や短い用語は自動採点、長い文は自己採点。
 function isDesc(ans){
   var t=(ans||'').trim();
@@ -1473,16 +1484,16 @@ function chkA(){
   var hasRb=Array.isArray(q.rubric)&&q.rubric.length>0;
   if(SE.subs){
     for(var i=0;i<SE.subs.length;i++){var ta=ge('TA'+SE.subs[i].n);if(!ta||ta.value.trim()===''){alert('全ての答えを入力してください');return;}}
-    var auto=true,desc=false;
+    var auto=true,desc=false,ng=false,may=false;
     for(var i=0;i<SE.subs.length;i++){
       var d=isDesc(SE.subs[i].a);
       if(d)desc=true;
       var v=ge('TA'+SE.subs[i].n).value;
       if(hasRb||d){if(nrm(v)!==nrm(SE.subs[i].a))auto=false;}
-      else{if(!mA(v,SE.subs[i].a))auto=false;}
+      else{var r3=mA3(v,SE.subs[i].a);if(r3===0){auto=false;ng=true;}else if(r3===2){auto=false;may=true;}}
     }
     stpT();SE.done=true;
-    if(hasRb)selfJudge();else if(auto)finRes(true);else if(desc)selfJudge();else finRes(false);
+    if(hasRb)selfJudge();else if(auto)finRes(true);else if(ng&&!desc)finRes(false);else if(desc||may)selfJudge();else finRes(false);
     return;
   }
   var ta=ge('TA0');if(!ta||ta.value.trim()===''){alert('答えを入力してください');return;}
@@ -1493,8 +1504,9 @@ function chkA(){
     if(nrm(ta.value)===nrm(ans))finRes(true);else selfJudge();
     return;
   }
-  var ok=mA(ta.value,ans);
-  finRes(ok);
+  var r=mA3(ta.value,ans);
+  if(r===2){selfJudge();return;}
+  finRes(r===1);
 }
 function shR(){
   stpT();var c=0;for(var i=0;i<SE.res.length;i++)if(SE.res[i])c++;
