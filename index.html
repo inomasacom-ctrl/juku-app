@@ -1328,6 +1328,10 @@ function mA3(ua,ca){
   var u=nrm(ua), c=nrm(ca);
   if(u===c)return 1;
   if(u==='')return 0;
+  // 記号の組（アとエ／イ、オ など）は順番ちがいも正解
+  var lbl=function(x){return String(x).replace(/[、，,・\s　と]+/g,'');}, LB=/^[ア-コA-J①-⑩]+$/;
+  var ul=lbl(ua), cl=lbl(ca);
+  if(/[、，,・と]/.test(ca)&&cl.length>=2&&cl.length<=6&&LB.test(cl)&&LB.test(ul)&&ul.length===cl.length&&ul.split('').sort().join('')===cl.split('').sort().join(''))return 1;
   // 方角・午前午後などの大事な言葉が正解にあるのに答えにない→不正解
   for(var k=0;k<MA_KEY.length;k++){var kw=MA_KEY[k];if(c.indexOf(kw)>=0&&u.indexOf(kw)<0&&!(kw==='南'&&c.indexOf('南')<0))return u.length&&c.indexOf(u)>=0?2:0;}
   var sep=function(x){return nrm(String(x).replace(/[、，,・\s　]+/g,'X'));};
