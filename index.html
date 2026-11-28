@@ -176,6 +176,14 @@ select:disabled{opacity:.4}
         <div class="fg"><label>回</label><select id="FK"><option value="">全回</option></select></div>
         <div class="fg"><label>単元</label><select id="FU" disabled><option value="">全単元</option></select></div>
       </div>
+      <div id="TRROW" style="display:none;border:1px dashed #c9b26b;border-radius:10px;padding:8px 10px;margin:4px 0 8px;background:#fffbea">
+        <div class="fr" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <label style="font-size:14px;font-weight:bold">いま終わっている回</label>
+          <select id="FTRD" style="padding:4px 6px;border-radius:6px;border:1px solid #ccc;font-size:14px"><option value="20">4年上ぜんぶ</option><option value="101">4年下 第1回</option><option value="102">4年下 第2回</option><option value="103">4年下 第3回</option><option value="104">4年下 第4回</option><option value="105">4年下 第5回</option><option value="106">4年下 第6回</option><option value="107">4年下 第7回</option><option value="108">4年下 第8回</option><option value="109">4年下 第9回</option><option value="110">4年下 第10回</option><option value="111">4年下 第11回</option><option value="112">4年下 第12回</option><option value="113">4年下 第13回</option><option value="114">4年下 第14回</option><option value="115">4年下 第15回</option><option value="116">4年下 第16回</option><option value="117">4年下 第17回</option><option value="118">4年下 第18回</option><option value="119">4年下 第19回</option></select>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="FTRO" checked style="width:18px;height:18px"> 今の力で解ける問題だけ出す</label>
+        </div>
+        <div id="TRINFO" style="font-size:13px;line-height:1.7;margin-top:6px"></div>
+      </div>
       <div class="fr">
         <div class="fg"><label>難易度</label>
           <select id="FD">
@@ -525,7 +533,8 @@ document.addEventListener('DOMContentLoaded',function(){
   ge('ICNG').addEventListener('click',function(){icNext(false);});
   ge('ICEND').addEventListener('click',function(){icStop();if(IC.ok+IC.ng>0){icFinish();}else{shP(0);}});
   ge('RSTBTN').addEventListener('click',function(){rstA();});
-  var fi=['FS','FSER','FK','FU','FD','FRV','FEW','FTH','FDD','FGM','FKJ','FKJN','FKJW','FIC','FICN','FICT'];
+  var fi=['FS','FSER','FK','FU','FD','FRV','FEW','FTH','FDD','FGM','FKJ','FKJN','FKJW','FIC','FICN','FICT','FTRD','FTRO'];
+  trLoad();
   for(var i=0;i<fi.length;i++){
     (function(id){
       var el=ge(id);if(!el)return;
@@ -577,7 +586,7 @@ function shP(n){
   ge('NB0').classList.toggle('on',n<3||n===5);ge('NB1').classList.toggle('on',n===3);ge('NB2').classList.toggle('on',n===4);
   try{ge('MAIN').scrollTop=0;}catch(e){}
 }
-function onF(id){if(id==='FIC'&&ge('FIC').checked&&ge('FKJ'))ge('FKJ').checked=false;if(id==='FKJ'&&ge('FKJ').checked&&ge('FIC'))ge('FIC').checked=false;if(id==='FS'||id==='FSER')bK();else if(id==='FK')bU();else if(id==='FTH'){var v=parseInt(ge('FTH').value,10);if(!isNaN(v)&&v>=1){TH=v;svTH();}upMC();}else if(id==='FDD'){DD=!!ge('FDD').checked;svDD();upMC();}else upMC();}
+function onF(id){if(id==='FTRD'){trSave();bU();trInfo();return;}if(id==='FTRO'){bU();trInfo();return;}if(id==='FIC'&&ge('FIC').checked&&ge('FKJ'))ge('FKJ').checked=false;if(id==='FKJ'&&ge('FKJ').checked&&ge('FIC'))ge('FIC').checked=false;if(id==='FS'||id==='FSER')bK();else if(id==='FK')bU();else if(id==='FTH'){var v=parseInt(ge('FTH').value,10);if(!isNaN(v)&&v>=1){TH=v;svTH();}upMC();}else if(id==='FDD'){DD=!!ge('FDD').checked;svDD();upMC();}else upMC();}
 function svS(){try{localStorage.setItem('jst3_'+PROF,JSON.stringify(ST2));}catch(e){}}
 function svH(){try{localStorage.setItem('jhi3_'+PROF,JSON.stringify(HS.slice(-50)));}catch(e){}}
 function upST(){
@@ -608,7 +617,7 @@ function pW(i){
   upMC();
 }
 // 総合回（第5・10・15・20回）→ その範囲の構成回
-var TRAINMAP={1:'記述練習',2:'選択肢の消去',3:'2択決着',4:'漢字・語句',5:'思考力（規則性）',6:'思考力（規則性・発展）',7:'思考力（平面図形）',8:'思考力（数の性質・条件整理）'};
+var TRAINMAP={1:'記述練習',2:'選択肢の消去',3:'2択決着',4:'漢字・語句',5:'思考力（規則性）',6:'思考力（規則性・発展）',7:'思考力（平面図形）',8:'思考力（数の性質・条件整理）',9:'思考力（立体図形）'};
 var MOSHIMAP={7:'①算数（200点）',8:'①国語（150点）',9:'①理科（100点）',10:'①社会（100点）',11:'②算数（200点）',12:'②国語（150点）',13:'②理科（100点）',14:'②社会（100点）'};
 function lblKai(sr,k){if(sr==='特訓')return TRAINMAP[k]||('区分'+k);if(sr==='模試')return MOSHIMAP[k]||('模試'+k);return '第'+k+'回';}
 var SOGO={5:[1,2,3,4],10:[6,7,8,9],15:[11,12,13,14],20:[16,17,18,19]};
@@ -618,6 +627,29 @@ function kaiMatch(qk,k){
   var c=SOGO[k];
   if(c){for(var i=0;i<c.length;i++){if(qk===c[i])return true;}}
   return false;
+}
+/* ===== 特訓：何回まで終わったら解けるか ===== */
+function reqCode(r){if(!r)return 0;var m=/^(上|下)(\d+)$/.exec(r);if(!m)return 0;return (m[1]==='下'?100:0)+parseInt(m[2],10);}
+function reqLbl(r){var m=/^(上|下)(\d+)$/.exec(r||'');return m?('4年'+m[1]+' 第'+m[2]+'回'):'';}
+function trDone(){var el=ge('FTRD');var v=el?parseInt(el.value,10):20;return isNaN(v)?20:v;}
+function trLoad(){try{var v=localStorage.getItem('trDone');if(v&&ge('FTRD')&&ge('FTRD').querySelector('option[value="'+v+'"]'))ge('FTRD').value=v;}catch(e){}}
+function trSave(){try{localStorage.setItem('trDone',String(trDone()));}catch(e){}}
+function trOK(q){return !q.req||reqCode(q.req)<=trDone();}
+function trInfo(){
+  var row=ge('TRROW');if(!row)return;
+  var on=ge('FSER').value==='特訓';row.style.display=on?'block':'none';if(!on)return;
+  var s=ge('FS').value,map={},order=[];
+  for(var i=0;i<AQ.length;i++){var q=AQ[i];if(q.series!=='特訓'||!q.req)continue;if(s&&q.subject!==s)continue;
+    var k=q.kai;if(!map[k]){map[k]={ok:0,all:0,next:{}};order.push(k);}
+    map[k].all++;if(trOK(q))map[k].ok++;else{var c=reqCode(q.req);map[k].next[c]=(map[k].next[c]||0)+1;}}
+  order.sort(function(a,b){return a-b;});
+  if(!order.length){ge('TRINFO').innerHTML='<span style="color:var(--mt)">この科目の特訓には、回の目安がついた問題がありません。</span>';return;}
+  var h='';
+  for(var j=0;j<order.length;j++){var k=order[j],m=map[k];
+    var nx=Object.keys(m.next).map(Number).sort(function(a,b){return a-b;});
+    var lock=nx.length?('　<span style="color:#a0522d">🔒 '+nx.map(function(c){var r=(c>100?'下'+(c-100):'上'+c);return reqLbl(r)+'のあと＋'+m.next[c]+'問';}).join('、')+'</span>'):'　<span style="color:#2e7d32">ぜんぶ解ける！</span>';
+    h+='<div><b>'+(TRAINMAP[k]||('区分'+k))+'</b>：✓ '+m.ok+'問／全'+m.all+'問'+lock+'</div>';}
+  ge('TRINFO').innerHTML=h;
 }
 function pl(){
   var s=ge('FS').value,sr=ge('FSER').value,kr=ge('FK').value,u=ge('FU').value,d=ge('FD').value;
@@ -629,6 +661,7 @@ function pl(){
     if(s&&q.subject!==s)continue;if(sr&&q.series!==sr)continue;
     if(k!==null&&!kaiMatch(q.kai,k))continue;if(u&&q.unit!==u)continue;if(d&&q.diff!==d)continue;
     if(rev&&!WR[q.id])continue;
+    if(sr==='特訓'&&ge('FTRO')&&ge('FTRO').checked&&!trOK(q))continue;
     if(few){ if(!(q.id in EW))continue; if(ewCnt(EW[q.id])>=TH)continue; }
     r.push(q);
   }
@@ -649,11 +682,15 @@ function bK(){
 function bU(){
   var s=ge('FS').value,sr=ge('FSER').value,kr=ge('FK').value,sel=ge('FU');
   sel.innerHTML='<option value="">全単元</option>';sel.disabled=!kr;
-  if(!kr){upMC();return;}
+  if(!kr){upMC();trInfo();return;}
   var k=parseInt(kr,10),seen={};
   for(var i=0;i<AQ.length;i++){var q=AQ[i];if(s&&q.subject!==s)continue;if(sr&&q.series!==sr)continue;if(!kaiMatch(q.kai,k))continue;seen[q.unit]=1;}
-  for(var u in seen){var o=document.createElement('option');o.value=u;o.textContent=u;sel.appendChild(o);}
-  upMC();
+  var ureq={};
+  if(sr==='特訓'){for(var i2=0;i2<AQ.length;i2++){var q2=AQ[i2];if(q2.series==='特訓'&&q2.req&&seen[q2.unit]&&kaiMatch(q2.kai,k)){var c2=reqCode(q2.req);if(!ureq[q2.unit]||c2>reqCode(ureq[q2.unit]))ureq[q2.unit]=q2.req;}}}
+  for(var u in seen){var o=document.createElement('option');o.value=u;
+    if(ureq[u]){var okk=reqCode(ureq[u])<=trDone();o.textContent=(okk?'✓ ':'🔒 ')+u+(okk?'':'（'+reqLbl(ureq[u])+'のあと）');}else o.textContent=u;
+    sel.appendChild(o);}
+  upMC();trInfo();
 }
 function upMC(){
   var rev=ge('FRV')&&ge('FRV').checked,few=ge('FEW')&&ge('FEW').checked,gm=ge('FGM')&&ge('FGM').checked;
@@ -1239,7 +1276,8 @@ function rnQ(){
   stT(sec);
   ge('QM').innerHTML='<span class="tg '+(STAG[q.subject]||'')+'">'+q.subject+'</span>'
     +'<span class="tg '+(DTAG[q.diff]||'')+'">'+q.diff+'</span>'
-    +'<span class="tg" style="background:var(--bg);color:var(--mt);font-size:10px">'+lblKai(q.series,q.kai)+'</span>';
+    +'<span class="tg" style="background:var(--bg);color:var(--mt);font-size:10px">'+lblKai(q.series,q.kai)+'</span>'
+    +(q.req?'<span class="tg" style="background:#fff3cd;color:#7a5b00;font-size:10px">'+reqLbl(q.req)+'まで習えば解ける</span>':'');
   ge('QX').textContent=kjAltQ(q);
   var qsv=ge('QSVG');
   if(qsv){if(q.svg){qsv.innerHTML=sanitizeSvg(q.svg);qsv.classList.add('on');}else{qsv.innerHTML='';qsv.classList.remove('on');}}
