@@ -522,8 +522,25 @@ document.addEventListener('DOMContentLoaded',function(){
       });
     }
   })();
+  /* 画面の大きさが変わったとき：書いた字は消さずに、マスの大きさだけ合わせる */
+  var padRT=null;
   window.addEventListener('resize',function(){
-    if(ge('PG5').classList.contains('on')&&!KJ.shown){if(KJ.auto)kjPadSetup(KJ.qs[KJ.i]);else padSetN(PAD.n);}
+    clearTimeout(padRT);
+    padRT=setTimeout(function(){
+      if(!ge('PG5').classList.contains('on')||KJ.shown)return;
+      if(PAD.pen&&PAD.pen.cur)return;                       /* 書いている最中は何もしない */
+      var wrap=ge('KJCVWRAP');if(!wrap)return;
+      var w=Math.min(wrap.clientWidth||320,520);
+      if(PAD.w&&Math.abs(w-PAD.w)<4)return;                /* 横はばが変わっていなければ（アドレスバーの出入りなど）作り直さない */
+      var keep=PAD.boxes.map(function(b){return {size:b.size,strokes:b.strokes};});
+      if(KJ.auto)kjPadSetup(KJ.qs[KJ.i]);else padSetN(PAD.n);
+      for(var i=0;i<PAD.boxes.length&&i<keep.length;i++){
+        var nb=PAD.boxes[i],k=keep[i];if(nb.fixed||!k.strokes.length)continue;
+        var r=nb.size/k.size;
+        nb.strokes=k.strokes.map(function(st){return st.map(function(p){return {x:p.x*r,y:p.y*r,t:p.t};});});
+        padRedraw(nb);
+      }
+    },250);
   });
   ge('KJOK').addEventListener('click',function(){kjNext(true);});
   ge('KJNG').addEventListener('click',function(){kjNext(false);});
@@ -741,6 +758,7 @@ function padBuild(n,wrapId,spec){
   wrap.innerHTML='';
   /* 画面幅に合わせてマスの大きさを決める */
   var avail=Math.min(wrap.clientWidth||320, 520);
+  PAD.w=avail;
   var size=Math.floor((avail-(n-1)*8)/n);
   var mx=spec?(n<=2?170:140):140;
   if(size>mx)size=mx; if(size<64)size=64;
